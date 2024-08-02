@@ -1,0 +1,15 @@
+[submodule "examples/models/Qwen2-0.5B-Instruct"]
+	path = examples/models/Qwen2-0.5B-Instruct
+	url = https://huggingface.co/Qwen/Qwen2-0.5B-Instruct
+[submodule "examples/ggufpackerfiles/single-stage-convert-from-local/Qwen2-0.5B-Instruct"]
+	path = examples/ggufpackerfiles/single-stage-convert-from-local/Qwen2-0.5B-Instruct
+	url = https://huggingface.co/Qwen/Qwen2-0.5B-Instruct
+[submodule "examples/ggufpackerfiles/multi-stages-convert-from-local/Qwen2-0.5B-Instruct"]
+	path = examples/ggufpackerfiles/multi-stages-convert-from-local/Qwen2-0.5B-Instruct
+	url = https://huggingface.co/Qwen/Qwen2-0.5B-Instruct
+[submodule "examples/ggufpackerfiles/multi-stages/Qwen2-0.5B-Instruct"]
+	path = examples/ggufpackerfiles/multi-stages/Qwen2-0.5B-Instruct
+	url = https://huggingface.co/Qwen/Qwen2-0.5B-Instruct
+[submodule "examples/ggufpackerfiles/single-stage/Qwen2-0.5B-Instruct"]
+	path = examples/ggufpackerfiles/single-stage/Qwen2-0.5B-Instruct
+	url = https://huggingface.co/Qwen/Qwen2-0.5B-Instruct

@@ -1,0 +1,7 @@
+ARG        CHAT_TEMPLATE="{% for message in messages %}{{'<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>' + '\n'}}{% endfor %}{% if add_generation_prompt %}{{ '<|im_start|>assistant\n' }}{% endif %}"
+
+FROM       alpine
+LABEL      gguf.model.from="Hugging Face"
+ADD        https://huggingface.co/QuantFactory/Qwen2-0.5B-Instruct-GGUF/resolve/main/Qwen2-0.5B-Instruct.Q5_K_M.gguf /app/Qwen2-0.5B-Instruct.Q5_K_M.gguf
+COPY       / /app
+CMD        ["-m", "/app/Qwen2-0.5B-Instruct.Q5_K_M.gguf", "-c", "8192", "--system-prompt-file", "/app/system-prompt.txt", "--chat-template", "${CHAT_TEMPLATE}"]
