@@ -12,6 +12,11 @@ defaults:
 on:
   workflow_dispatch:
     inputs:
+      huggingface_model:
+        description: "HuggingFace Model"
+        required: true
+        type: string
+        default: ""
       model_repository:
         description: "Model Repository"
         required: true
@@ -27,14 +32,9 @@ on:
         required: true
         type: string
         default: ""
-      convert_huggingface_model:
-        description: "Convert HuggingFace Model"
-        type: string
-        default: ""
 
 jobs:
-  convert:
-    if: ${{ github.event.inputs.convert_huggingface_model != '' }}
+  pack:
     runs-on: ubuntu-22.04
     steps:
       - name: Maximize Space
@@ -50,80 +50,47 @@ jobs:
         with:
           fetch-depth: 1
           persist-credentials: false
-      - name: Download Model
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.CI_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CI_DOCKERHUB_PASSWORD }}
+      - name: Get Model
         env:
           HF_TOKEN: ${{ secrets.CI_HUGGINGFACE_TOKEN }}
         run: |
           #!/bin/bash
+          
           git lfs install
-          git clone https://thxCode:${HF_TOKEN}@huggingface.co/${{ github.event.inputs.convert_huggingface_model }} ${{ github.workspace }}/packs/model
-      - name: Setup Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Login DockerHub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.CI_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CI_DOCKERHUB_PASSWORD }}
-      - name: Package
+          git clone --depth 1 https://thxCode:${HF_TOKEN}@huggingface.co/${{ github.event.inputs.huggingface_model }} ${{ github.workspace }}/packs/model
+          rm -rf ${{ github.workspace }}/packs/model/.git
+      - name: F16
         uses: docker/build-push-action@v6
         with:
           push: true
-          target: convert
+          target: f16
           file: "${{ github.workspace }}/packs/Dockerfile.${{ github.event.inputs.model_name }}"
-          context: "${{ github.workspace }}/packs"
-          tags: "${{ github.event.inputs.model_repository }}/${{ github.event.inputs.model_name }}:${{ github.event.inputs.model_tag }}-f16"
-          cache-from: |
-            type=registry,ref=${{ github.event.inputs.model_repository }}/build-cache:${{ github.event.inputs.model_name}}-${{ github.event.inputs.model_tag }}
-          cache-to: |
-            type=registry,ref=${{ github.event.inputs.model_repository }}/build-cache:${{ github.event.inputs.model_name}}-${{ github.event.inputs.model_tag }}
-
-  quantize:
-    needs:
-      - convert
-    strategy:
-      fail-fast: false
-      matrix:
-        type: [ Q3_K_M, Q4_K_M, Q5_K_M, Q6_K, Q8_0 ]
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Maximize Space
-        # see https://github.com/easimon/maximize-build-space/blob/master/action.yml.
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /opt/hostedtoolcache/CodeQL
-          sudo docker image prune --all --force
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-          persist-credentials: false
-      - name: Setup Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Login DockerHub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.CI_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CI_DOCKERHUB_PASSWORD }}
-      - name: Get Suffix
-        id: suffix
-        run: |
-          #!/bin/bash
-          suffix=$(echo "${QUANTIZE_TYPE}" | tr '[:upper:]' '[:lower:]' | sed 's/_/-/g')
-          echo "value=${suffix}" >> "$GITHUB_OUTPUT"
-      - name: Package
-        uses: docker/build-push-action@v6
-        with:
-          build-args: |
-            QUANTIZE_TYPE=${{ matrix.type }}
-          push: true
-          target: quantize
-          no-cache: true
-          file: "${{ github.workspace }}/packs/Dockerfile.${{ github.event.inputs.model_name }}"
-          context: "${{ github.workspace }}/packs"
+          context: ${{ github.workspace }}/packs
           tags: |
-            "${{ github.event.inputs.model_repository }}/${{ github.event.inputs.model_name }}:${{ github.event.inputs.model_tag }}-${{ steps.suffix.outputs.value }}"
-            "${{ matrix.type == 'Q4_K_M' && format('{0}/{1}:latest', github.event.inputs.model_repository, github.event.inputs.model_name) || '' }}"
-          cache-from: |
-            type=registry,ref=${{ github.event.inputs.model_repository }}/build-cache:${{ github.event.inputs.model_name}}-${{ github.event.inputs.model_tag }}
+            "${{ github.event.inputs.model_repository }}/${{ github.event.inputs.model_name }}:${{ github.event.inputs.model_tag }}-f16"
+      - name: Q5_K_M
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          file: "${{ github.workspace }}/packs/Dockerfile.${{ github.event.inputs.model_name }}"
+          context: ${{ github.workspace }}/packs
+          tags: |
+            "${{ github.event.inputs.model_repository }}/${{ github.event.inputs.model_name }}:${{ github.event.inputs.model_tag }}-q5-k-m"
+            "${{ github.event.inputs.model_repository }}/${{ github.event.inputs.model_name }}:${{ github.event.inputs.model_tag }}"
+      - name: Q6_K
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          file: "${{ github.workspace }}/packs/Dockerfile.${{ github.event.inputs.model_name }}"
+          context: ${{ github.workspace }}/packs
+          build-args: |
+            QUANTIZE_TYPE=Q6_K
+          tags: |
+            "${{ github.event.inputs.model_repository }}/${{ github.event.inputs.model_name }}:${{ github.event.inputs.model_tag }}-q6-k"
