@@ -429,6 +429,25 @@ LABEL org.opencontainers.image.title="Qwen2-0.5B-Instruct" \
       org.opencontainers.image.source="https://huggingface.co/Qwen/Qwen2-0.5B-Instruct"
 ```
 
+##### Export Labels
+
+Since GGUF format model files will
+record [the general metadata](https://github.com/ggerganov/ggml/blob/master/docs/gguf.md#general-metadata), GGUF Packer
+can retrieve these values and export them as labels.
+
+- `gguf.model.architecture`: The architecture of the model.
+- `gguf.model.parameters`: The parameters of the model.
+- `gguf.model.bpw`: The bits per weight of the model.
+- `gguf.model.filetype`: The file type of the model.
+- `gguf.model.name`: The name of the model, if specified.
+- `gguf.model.authors`: The authors of the model, if specified.
+- `gguf.model.url`: The URL of the model, if specified.
+- `gguf.model.description`: The description of the model, if specified.
+- `gguf.model.licenses`: The licenses of the model, if specified.
+- `gguf.model.usage`: The usage of the model, default is `text`.
+
+All labels can be overridden by the Dockerfile/GGUFPackerfile.
+
 #### QUANTIZE
 
 The `QUANTIZE` instruction allows you to quantize a GGUF file.
