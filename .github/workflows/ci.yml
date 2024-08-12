@@ -19,8 +19,8 @@ on:
       - "**.mdx"
       - "**.png"
       - "**.jpg"
-      - "packs/**"
-      - ".github/workflows/pack.yml"
+      - "models/**"
+      - ".github/workflows/models-*.yml"
   pull_request:
     branches:
       - 'main'
@@ -30,8 +30,8 @@ on:
       - "**.mdx"
       - "**.png"
       - "**.jpg"
-      - "packs/**"
-      - ".github/workflows/pack.yml"
+      - "models/**"
+      - ".github/workflows/models-*.yml"
 
 jobs:
   ci:

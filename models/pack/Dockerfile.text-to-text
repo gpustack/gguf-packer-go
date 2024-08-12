@@ -1,0 +1,12 @@
+# syntax=thxcode/gguf-packer:latest
+
+ARG        MODEL_VENDOR="Qwen"
+ARG        MODEL_REPOSITORY="Qwen/Qwen2-0.5B"
+ARG        MODEL_FILE="qwen2-0.5b-instruct-q5_k_m.gguf"
+
+FROM       scratch
+LABEL      gguf.model.from="Hugging Face"
+LABEL      gguf.model.usage="text-to-text"
+LABEL      gguf.model.vendor="${MODEL_VENDOR}"
+ADD        https://huggingface.co/${MODEL_REPOSITORY}/resolve/main/${MODEL_FILE} ${MODEL_FILE}
+CMD        ["-m", "${MODEL_FILE}", "-c", "8192", "-np", "4"]

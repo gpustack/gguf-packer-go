@@ -440,11 +440,12 @@ can retrieve these values and export them as labels.
 - `gguf.model.bpw`: The bits per weight of the model.
 - `gguf.model.filetype`: The file type of the model.
 - `gguf.model.name`: The name of the model, if specified.
+- `gguf.model.vendor`: The vendor of the model, if specified.
 - `gguf.model.authors`: The authors of the model, if specified.
 - `gguf.model.url`: The URL of the model, if specified.
 - `gguf.model.description`: The description of the model, if specified.
 - `gguf.model.licenses`: The licenses of the model, if specified.
-- `gguf.model.usage`: The usage of the model, default is `text`.
+- `gguf.model.usage`: The usage of the model, default is `text-to-text`.
 
 All labels can be overridden by the Dockerfile/GGUFPackerfile.
 

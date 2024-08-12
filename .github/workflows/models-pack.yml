@@ -1,0 +1,131 @@
+name: model-pack
+
+permissions:
+  contents: write
+  actions: read
+  id-token: write
+
+defaults:
+  run:
+    shell: bash
+
+on:
+  workflow_dispatch:
+    inputs:
+      model_repository:
+        description: "Model Repository"
+        required: true
+        type: string
+        default: ""
+      model_name:
+        description: "Model Name"
+        required: true
+        type: string
+        default: ""
+
+jobs:
+  generate-matrix:
+    runs-on: ubuntu-22.04
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set Matrix
+        id: set-matrix
+        run: |
+          echo "matrix=$(yq 'map(.[] | select(.name == "${{ github.event.inputs.model_name }}"))' --output-format json --indent 0 ${{ github.workspace }}/models/pack/matrix.yaml)" >> "$GITHUB_OUTPUT"
+
+  pack:
+    needs:
+      - generate-matrix
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Maximize Space
+        # see https://github.com/easimon/maximize-build-space/blob/master/action.yml.
+        run: |
+          #!/bin/bash
+
+          echo "Purging unnecessary packages"
+          sudo apt-get remove -y '^aspnetcore-.*' || true
+          sudo apt-get remove -y '^dotnet-.*' --fix-missing || true
+          sudo apt-get remove -y '^llvm-.*' --fix-missing || true
+          sudo apt-get remove -y 'php.*' --fix-missing || true
+          sudo apt-get remove -y '^mongodb-.*' --fix-missing || true
+          sudo apt-get remove -y '^mysql-.*' --fix-missing || true
+          sudo apt-get remove -y '^postgresql-.*' --fix-missing || true
+          sudo apt-get remove -y --fix-missing \
+            azure-cli \
+            firefox \
+            powershell \
+            mono-devel \
+            libgl1-mesa-dri \
+            microsoft-edge-stable \
+            google-chrome-stable \
+            google-cloud-sdk \
+            google-cloud-cli \
+            apache2 \
+            python3 python3-dev python3-pip python3-venv || true
+          df -h /
+
+          echo "Purging unnecessary directories"
+          sudo rm -rf /usr/local/.ghcup || true
+          sudo rm -rf /usr/local/julia* || true
+          sudo rm -rf /usr/local/lib/android || true
+          sudo rm -rf /usr/local/lib/node_modules || true
+          sudo rm -rf /usr/local/share/chromium || true
+          sudo rm -rf /usr/local/share/powershell || true
+          sudo rm -rf /usr/share/dotnet || true
+          sudo rm -rf /usr/share/swift || true
+          sudo rm -rf /opt/ghc || true
+          sudo rm -rf /opt/pipx || true
+          sudo rm -rf /opt/google/chrome || true
+          sudo rm -rf /opt/microsoft/msedge || true
+          sudo rm -rf /opt/microsoft/powershell || true
+          sudo rm -rf "${AGENT_TOOLSDIRECTORY:-/opt/hostedtoolcache/CodeQL}" || true
+          df -h /
+
+          echo "Purging unnecessary images"
+          sudo docker image prune --all --force
+          df -h /
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.CI_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CI_DOCKERHUB_PASSWORD }}
+      - name: Prepare
+        id: prepare
+        run: |
+          #!/bin/bash
+          
+          echo "Get outputs"
+          MODEL_VENDOR="$(echo "${{ matrix.repository }}" | cut -d'/' -f1)"
+          echo "model_vendor=${MODEL_VENDOR}" >> "$GITHUB_OUTPUT"
+      - name: Package
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          context: "${{ github.workspace }}/models/pack"
+          file: "${{ github.workspace }}/models/pack/Dockerfile.${{ matrix.usage }}"
+          build-args: |
+            MODEL_VENDOR=${{ steps.prepare.outputs.model_vendor }}
+            MODEL_REPOSITORY=${{ matrix.repository }}
+            MODEL_FILE=${{ matrix.file }}
+            ${{ matrix.project_file != ''  && format('MODEL_PROJECTOR_FILE={0}', matrix.project_file ) || ''}}
+            ${{ matrix.quantize_type != '' && format('MODEL_QUANTIZE_TYPE={0}',  matrix.quantize_type) || ''}}
+          tags: |
+            "${{ github.event.inputs.model_repository }}/${{ matrix.name }}:${{ matrix.tag }}"

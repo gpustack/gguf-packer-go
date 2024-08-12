@@ -1,0 +1,14 @@
+# syntax=thxcode/gguf-packer:latest
+
+ARG        MODEL_VENDOR="second-state"
+ARG        MODEL_REPOSITORY="second-state/Llava-v1.5-7B-GGUF"
+ARG        MODEL_FILE="llava-v1.5-7b-Q5_K_M.gguf"
+ARG        MODEL_PROJECTOR_FILE="llava-v1.5-7b-mmproj-model-f16.gguf"
+
+FROM       scratch
+LABEL      gguf.model.from="Hugging Face"
+LABEL      gguf.model.usage="image-to-text"
+LABEL      gguf.model.vendor="${MODEL_VENDOR}"
+ADD        https://huggingface.co/${MODEL_REPOSITORY}/resolve/main/${MODEL_PROJECTOR_FILE} ${MODEL_PROJECTOR_FILE}
+ADD        https://huggingface.co/${MODEL_REPOSITORY}/resolve/main/${MODEL_FILE} ${MODEL_FILE}
+CMD        ["-m", "${MODEL_FILE}", "--mmproj", "${MODEL_PROJECTOR_FILE}", "-c", "8192", "-np", "4"]

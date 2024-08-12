@@ -1,0 +1,19 @@
+# syntax=thxcode/gguf-packer:latest
+
+ARG        MODEL_VENDOR="xtuner"
+ARG        MODEL_REPOSITORY="xtuner/llava-phi-3-mini-gguf"
+ARG        MODEL_FILE="llava-phi-3-mini-f16.gguf"
+ARG        MODEL_PROJECTOR_FILE="llava-phi-3-mini-mmproj-f16.gguf"
+ARG        MODEL_QUANTIZE_TYPE=Q5_K_M
+
+FROM       scratch AS quantize
+ADD        https://huggingface.co/${MODEL_REPOSITORY}/resolve/main/${MODEL_FILE} ${MODEL_FILE}
+QUANTIZE   --type=${MODEL_QUANTIZE_TYPE} ${MODEL_FILE} model.${MODEL_QUANTIZE_TYPE}.gguf
+
+FROM       scratch
+LABEL      gguf.model.from="Hugging Face"
+LABEL      gguf.model.usage="image-to-text"
+LABEL      gguf.model.vendor="${MODEL_VENDOR}"
+ADD        https://huggingface.co/${MODEL_REPOSITORY}/resolve/main/${MODEL_PROJECTOR_FILE} ${MODEL_PROJECTOR_FILE}
+COPY       --from=quantize model.${MODEL_QUANTIZE_TYPE}.gguf model.${MODEL_QUANTIZE_TYPE}.gguf
+CMD        ["-m", "model.${MODEL_QUANTIZE_TYPE}.gguf", "--mmproj", "${MODEL_PROJECTOR_FILE}", "-c", "8192", "-np", "4"]

@@ -199,8 +199,8 @@ func Build(ctx context.Context, c client.Client) (_ *client.Result, err error) {
 						img.Config.Labels = map[string]string{}
 					}
 					lbs := img.Config.Labels
-					setLabel(lbs, "gguf-packer", "org.opencontainers.image.vendor")
-					setLabel(lbs, "text", "gguf.model.usage")
+					setLabel(lbs, "gguf-packer", "gguf.model.vendor", "org.opencontainers.image.vendor")
+					setLabel(lbs, "text-to-text", "gguf.model.usage")
 					setLabel(lbs, m.Architecture, "gguf.model.architecture")
 					setLabel(lbs, m.Parameters.String(), "gguf.model.parameters")
 					setLabel(lbs, m.BitsPerWeight.String(), "gguf.model.bpw")

@@ -1,0 +1,17 @@
+# syntax=thxcode/gguf-packer:latest
+
+ARG        MODEL_VENDOR="google"
+ARG        MODEL_REPOSITORY="google/codegemma-7b-it-GGUF"
+ARG        MODEL_FILE="codegemma-7b-it-f16.gguf"
+ARG        MODEL_QUANTIZE_TYPE=Q5_K_M
+
+FROM       scratch AS quantize
+ADD        https://huggingface.co/${MODEL_REPOSITORY}/resolve/main/${MODEL_FILE} ${MODEL_FILE}
+QUANTIZE   --type=${MODEL_QUANTIZE_TYPE} ${MODEL_FILE} model.${MODEL_QUANTIZE_TYPE}.gguf
+
+FROM       scratch
+LABEL      gguf.model.from="Hugging Face"
+LABEL      gguf.model.usage="text-to-text"
+LABEL      gguf.model.vendor="${MODEL_VENDOR}"
+COPY       --from=quantize model.${MODEL_QUANTIZE_TYPE}.gguf model.${MODEL_QUANTIZE_TYPE}.gguf
+CMD        ["-m", "model.${MODEL_QUANTIZE_TYPE}.gguf", "-c", "8192", "-np", "4"]
