@@ -22,7 +22,8 @@ or [BuildKit daemon](https://github.com/moby/buildkit?tab=readme-ov-file#quick-s
   BuildKit.
 - Use Dockerfile directly instead of
   the [Ollama Model File](https://github.com/ollama/ollama/blob/main/docs/modelfile.md).
-- [CloudNative](https://www.cncf.io/) friendly.
+- [CloudNative](https://www.cncf.io/) friendly,
+  see [KEP-4639 OCI VolumeSource PoC](https://github.com/kubernetes/kubernetes/issues/125463).
 
 ## Agenda
 
@@ -226,10 +227,62 @@ $ docker run --rm --interactive --tty ${REPO}/qwen2:0.5b-instruct-q5-k-m-demo2-i
 `GGUFPackerfile` is the preferred file name of the GGUF Packer frontend. It can be simply understood that when a
 `Dockerfile` is added with a specific syntax, this `Dockerfile` is equivalent to `GGUFPackerfile`.
 
-|              | Dockerfile                                                    | GGUFPackerfile                                                                                                                         |
-|--------------|---------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
-|              | # syntax=gpustack/gguf-packer:latest<br/>FROM scratch<br/>... | <br/>FROM scratch<br/>...                                                                                                              |
-| docker build | docker build \ <br/> --tag ${TAG} $(pwd) <br/> <br/> <br/>    | docker build \ <br/> --build-arg BUILDKIT_SYNTAX=gpustack/gguf-packer:latest \ <br/> --file GGUFPackerfile \ <br/> --tag ${TAG} $(pwd) |                                  
+<table>
+<thead>
+<tr>
+<th> </th>
+<th> Command </th>
+<th> Content </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td> 
+
+**Dockerfile**
+
+</td>
+<td> 
+
+``` shell
+$ docker build --tag ${TAG}
+```
+
+</td>
+<td>
+
+```dockerfile
+# syntax=gpustack/gguf-packer:latest
+FROM scratch
+```
+
+</td>
+</tr>
+<tr>
+<td> 
+
+**GGUFPackerfile**
+
+</td>
+<td> 
+
+```
+$ docker build --tag ${TAG} \
+    --build-arg BUILDKIT_SYNTAX=gpustack/gguf-packer:latest \
+    --file GGUFPackerfile 
+```
+
+</td>
+<td>
+
+``` dockerfile
+FROM scratch
+```
+
+</td>
+</tr>
+</tbody>
+</table>
 
 See [examples](./examples) for more details.
 

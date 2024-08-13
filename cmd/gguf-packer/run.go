@@ -25,15 +25,15 @@ func run(app string) *cobra.Command {
 	)
 	c := &cobra.Command{
 		Use:   "run MODEL [ARG...]",
-		Short: "Run a model via specific process, like Docker container, executable binary, etc.",
-		Example: sprintf(`  # Run a model via Docker container: ghcr.io/ggerganov/llama.cpp:server
+		Short: "Run a model by specific process, like container image or executable binary.",
+		Example: sprintf(`  # Run a model by container image: ghcr.io/ggerganov/llama.cpp:server
   %s run gpustack/qwen2:latest
 
   # Customize model running
   %[1]s run gpustack/qwen2:latest -- --port 8888 -c 8192 -np 4
 
-  # Run a model via executable binary: llama-server
-  %[1]s run gpustack/qwen2:latest --by llama-server
+  # Run a model by executable binary: llama-box
+  %[1]s run gpustack/qwen2:latest --by llama-box
 
   # Dry run to print the command that would be executed
   %[1]s run gpustack/qwen2:latest --dry-run`, app),
@@ -174,7 +174,9 @@ func run(app string) *cobra.Command {
 			return err
 		},
 	}
-	c.Flags().StringVar(&by, "by", by, "Run the model via specific process.")
+	c.Flags().StringVar(&by, "by", by, "Specify how to run the model. "+
+		"If given a strict format container image reference, it will be run via Docker container, "+
+		"otherwise it will be run via executable binary.")
 	c.Flags().BoolVar(&dryRun, "dry-run", dryRun, "Print the command that would be executed, but do not execute it.")
 	return c
 }

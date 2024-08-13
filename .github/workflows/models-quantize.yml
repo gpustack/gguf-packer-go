@@ -55,55 +55,15 @@ jobs:
       model_suffix: ${{ steps.prepare.outputs.model_suffix }}
       matrix: ${{ steps.prepare.outputs.matrix }}
     steps:
-      - name: Maximize Space
-        # see https://github.com/easimon/maximize-build-space/blob/master/action.yml.
-        run: |
-          #!/bin/bash
-          
-          echo "Purging unnecessary packages"
-          sudo apt-get remove -y '^aspnetcore-.*' || true
-          sudo apt-get remove -y '^dotnet-.*' --fix-missing || true
-          sudo apt-get remove -y '^llvm-.*' --fix-missing || true
-          sudo apt-get remove -y 'php.*' --fix-missing || true
-          sudo apt-get remove -y '^mongodb-.*' --fix-missing || true
-          sudo apt-get remove -y '^mysql-.*' --fix-missing || true
-          sudo apt-get remove -y '^postgresql-.*' --fix-missing || true
-          sudo apt-get remove -y --fix-missing \
-            azure-cli \
-            firefox \
-            powershell \
-            mono-devel \
-            libgl1-mesa-dri \
-            microsoft-edge-stable \
-            google-chrome-stable \
-            google-cloud-sdk \
-            google-cloud-cli \
-            apache2 \
-            python3 python3-dev python3-pip python3-venv || true
-          df -h /
-          
-          echo "Purging unnecessary directories"
-          sudo rm -rf /usr/local/.ghcup || true
-          sudo rm -rf /usr/local/julia* || true
-          sudo rm -rf /usr/local/lib/android || true
-          sudo rm -rf /usr/local/lib/node_modules || true
-          sudo rm -rf /usr/local/share/chromium || true
-          sudo rm -rf /usr/local/share/powershell || true
-          sudo rm -rf /usr/share/dotnet || true
-          sudo rm -rf /usr/share/swift || true
-          sudo rm -rf /opt/ghc || true
-          sudo rm -rf /opt/pipx || true
-          sudo rm -rf /opt/google/chrome || true
-          sudo rm -rf /opt/microsoft/msedge || true
-          sudo rm -rf /opt/microsoft/powershell || true
-          sudo rm -rf "${AGENT_TOOLSDIRECTORY:-/opt/hostedtoolcache/CodeQL}" || true
-          df -h /
-          
-          echo "Purging unnecessary images"
-          sudo docker image prune --all --force
-          df -h /
+      - name: Maximize Docker Build Space
+        uses: gpustack/gguf-packer-go/.github/actions/maximize-docker-build-space@main
+        with:
+          deep-clean: true
       - name: Setup Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=thxcode/buildkit:v0.15.1-git-lfs
       - name: Login DockerHub
         uses: docker/login-action@v3
         with:
@@ -117,23 +77,18 @@ jobs:
         run: |
           #!/bin/bash
           
-          echo "Get model"
-          git lfs install
-          git clone --depth 1 https://gpustack:${HF_TOKEN}@huggingface.co/${{ github.event.inputs.huggingface_repository }} ${{ github.workspace }}/model
-          rm -rf ${{ github.workspace }}/model/.git
-          ls -alth ${{ github.workspace }}/model
-          df -h /
-          
           echo "Get Dockerfile"
           MODEL_VENDOR="$(echo "${{ github.event.inputs.huggingface_repository }}" | cut -d'/' -f1)"
           MODEL_NAME="$(echo "${{ github.event.inputs.huggingface_repository }}" | cut -d'/' -f2)"
           cat <<EOF > ${{ github.workspace }}/Dockerfile
           # syntax=gpustack/gguf-packer:latest
+          FROM       scratch AS model
+          ADD        https://gpustack:${HF_TOKEN}@huggingface.co/${{ github.event.inputs.huggingface_repository }} /model
           FROM       scratch
           LABEL      gguf.model.from="Hugging Face"
           LABEL      gguf.model.usage="${{ github.event.inputs.model_usage }}"
           LABEL      gguf.model.vendor="${MODEL_VENDOR}"
-          CONVERT    --from=context --type=${CONVERT_TYPE} /model ${MODEL_NAME}.${CONVERT_TYPE}.gguf
+          CONVERT    --from=model --type=${CONVERT_TYPE} /model ${MODEL_NAME}.${CONVERT_TYPE}.gguf
           CMD        ["-m", "${MODEL_NAME}.${CONVERT_TYPE}.gguf", "-c", "8192", "-np", "4"]
           EOF
           
@@ -145,14 +100,14 @@ jobs:
         with:
           push: true
           context: ${{ github.workspace }}
+          no-cache: true
           tags: |
             "${{ github.event.inputs.model_repository }}/${{ github.event.inputs.model_name }}:${{ github.event.inputs.model_tag }}-${{ steps.prepare.outputs.model_suffix }}"
-      - name: Review
+      - name: Review Space Usage
         run: |
           #!/bin/bash
           
-          echo "Review disk usage"
-          df -h /
+          df -h
 
   quantize:
     needs:
@@ -163,53 +118,10 @@ jobs:
       matrix:
         type: ${{ fromJson(needs.convert.outputs.matrix) }}
     steps:
-      - name: Maximize Space
-        # see https://github.com/easimon/maximize-build-space/blob/master/action.yml.
-        run: |
-          #!/bin/bash
-          
-          echo "Purging unnecessary packages"
-          sudo apt-get remove -y '^aspnetcore-.*' || true
-          sudo apt-get remove -y '^dotnet-.*' --fix-missing || true
-          sudo apt-get remove -y '^llvm-.*' --fix-missing || true
-          sudo apt-get remove -y 'php.*' --fix-missing || true
-          sudo apt-get remove -y '^mongodb-.*' --fix-missing || true
-          sudo apt-get remove -y '^mysql-.*' --fix-missing || true
-          sudo apt-get remove -y '^postgresql-.*' --fix-missing || true
-          sudo apt-get remove -y --fix-missing \
-            azure-cli \
-            firefox \
-            powershell \
-            mono-devel \
-            libgl1-mesa-dri \
-            microsoft-edge-stable \
-            google-chrome-stable \
-            google-cloud-sdk \
-            google-cloud-cli \
-            apache2 \
-            python3 python3-dev python3-pip python3-venv || true
-          df -h /
-          
-          echo "Purging unnecessary directories"
-          sudo rm -rf /usr/local/.ghcup || true
-          sudo rm -rf /usr/local/julia* || true
-          sudo rm -rf /usr/local/lib/android || true
-          sudo rm -rf /usr/local/lib/node_modules || true
-          sudo rm -rf /usr/local/share/chromium || true
-          sudo rm -rf /usr/local/share/powershell || true
-          sudo rm -rf /usr/share/dotnet || true
-          sudo rm -rf /usr/share/swift || true
-          sudo rm -rf /opt/ghc || true
-          sudo rm -rf /opt/pipx || true
-          sudo rm -rf /opt/google/chrome || true
-          sudo rm -rf /opt/microsoft/msedge || true
-          sudo rm -rf /opt/microsoft/powershell || true
-          sudo rm -rf "${AGENT_TOOLSDIRECTORY:-/opt/hostedtoolcache/CodeQL}" || true
-          df -h /
-          
-          echo "Purging unnecessary images"
-          sudo docker image prune --all --force
-          df -h /
+      - name: Maximize Docker Build Space
+        uses: gpustack/gguf-packer-go/.github/actions/maximize-docker-build-space@main
+        with:
+          deep-clean: true
       - name: Setup Buildx
         uses: docker/setup-buildx-action@v3
       - name: Login DockerHub
@@ -246,6 +158,6 @@ jobs:
         with:
           push: true
           context: ${{ github.workspace }}
+          no-cache: true
           tags: |
             "${{ github.event.inputs.model_repository }}/${{ github.event.inputs.model_name }}:${{ github.event.inputs.model_tag }}-${{ steps.prepare.outputs.model_suffix }}"
-            "${{ matrix.type == 'Q5_K_M' && format('{0}/{1}:{2}', github.event.inputs.model_repository, github.event.inputs.model_name, github.event.inputs.model_tag) || '' }}"
