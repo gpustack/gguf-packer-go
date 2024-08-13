@@ -128,7 +128,7 @@ jobs:
           MODEL_VENDOR="$(echo "${{ github.event.inputs.huggingface_repository }}" | cut -d'/' -f1)"
           MODEL_NAME="$(echo "${{ github.event.inputs.huggingface_repository }}" | cut -d'/' -f2)"
           cat <<EOF > ${{ github.workspace }}/Dockerfile
-          # syntax=thxcode/gguf-packer:latest
+          # syntax=gpustack/gguf-packer:latest
           FROM       scratch
           LABEL      gguf.model.from="Hugging Face"
           LABEL      gguf.model.usage="${{ github.event.inputs.model_usage }}"
@@ -230,7 +230,7 @@ jobs:
           MODEL_NAME="$(echo "${{ github.event.inputs.huggingface_repository }}" | cut -d'/' -f2)"
           QUANTIZE_FROM="${{ github.event.inputs.model_repository }}/${{ github.event.inputs.model_name }}:${{ github.event.inputs.model_tag }}-${{ needs.convert.outputs.model_suffix }}"
           cat <<EOF > ${{ github.workspace }}/Dockerfile
-          # syntax=thxcode/gguf-packer:latest
+          # syntax=gpustack/gguf-packer:latest
           FROM       scratch
           LABEL      gguf.model.from="Hugging Face"
           LABEL      gguf.model.usage="${{ github.event.inputs.model_usage }}"

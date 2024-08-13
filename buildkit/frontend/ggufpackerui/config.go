@@ -53,7 +53,7 @@ const (
 )
 
 const (
-	DefaultImage = "docker.io/thxcode/gguf-packer:latest"
+	DefaultImage = "docker.io/gpustack/gguf-packer:latest"
 )
 
 type Config struct {

@@ -31,10 +31,10 @@ $ cd gguf-packer-go/examples/ggufpackerfiles/multi-stages
 3. Build this example.
 
 ```shell
-$ docker build --build-arg BUILDKIT_SYNTAX=thxcode/gguf-packer:latest --file GGUFPackerfile --tag multi-stages/qwen2:0.5b-instruct-q5-k-m --load $(pwd)
+$ docker build --build-arg BUILDKIT_SYNTAX=gpustack/gguf-packer:latest --file GGUFPackerfile --tag multi-stages/qwen2:0.5b-instruct-q5-k-m --load $(pwd)
 
 $ # or build with external buildkitd as below, see https://github.com/moby/buildkit.
-$ # buildctl build --frontend gateway.v0 --opt source=thxcode/gguf-packer:latest --local context=$(pwd) --output type=docker,name=multi-stages/qwen2:0.5b-instruct-q5-k-m | docker load
+$ # buildctl build --frontend gateway.v0 --opt source=gpustack/gguf-packer:latest --local context=$(pwd) --output type=docker,name=multi-stages/qwen2:0.5b-instruct-q5-k-m | docker load
 ```
 
 4. Review the result.
@@ -53,10 +53,10 @@ multi-stages build to reduce the size of the image.
 Use the single GGUFPackerfile to build other quantization model, such as `Q6_K` type.
 
 ```shell
-$ docker build --build-arg BUILDKIT_SYNTAX=thxcode/gguf-packer:latest --build-arg QUANTIZE_TYPE=Q6_K --file GGUFPackerfile --tag multi-stages/qwen2:0.5b-instruct-q6-k --load $(pwd)
+$ docker build --build-arg BUILDKIT_SYNTAX=gpustack/gguf-packer:latest --build-arg QUANTIZE_TYPE=Q6_K --file GGUFPackerfile --tag multi-stages/qwen2:0.5b-instruct-q6-k --load $(pwd)
 
 $ # or build with external buildkitd as below, see https://github.com/moby/buildkit.
-$ # buildctl build --frontend gateway.v0 --opt source=thxcode/gguf-packer:latest --opt build-arg:QUANTIZE_TYPE=Q6_K --local context=$(pwd) --output type=docker,name=multi-stages/qwen2:0.5b-instruct-q6-k | docker load
+$ # buildctl build --frontend gateway.v0 --opt source=gpustack/gguf-packer:latest --opt build-arg:QUANTIZE_TYPE=Q6_K --local context=$(pwd) --output type=docker,name=multi-stages/qwen2:0.5b-instruct-q6-k | docker load
 
 $ docker images multi-stages/qwen2:0.5b-instruct-q6-k
 ```

@@ -2,12 +2,12 @@
 
 > tl;dr, Deliver LLMs of [GGUF](https://github.com/ggerganov/ggml/blob/master/docs/gguf.md) via Dockerfile.
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/thxcode/gguf-packer-go)](https://goreportcard.com/report/github.com/thxcode/gguf-packer-go)
-[![CI](https://img.shields.io/github/actions/workflow/status/thxcode/gguf-packer-go/cmd.yml?label=ci)](https://github.com/thxcode/gguf-packer-go/actions)
-[![License](https://img.shields.io/github/license/thxcode/gguf-packer-go?label=license)](https://github.com/thxcode/gguf-packer-go#license)
-[![Download](https://img.shields.io/github/downloads/thxcode/gguf-packer-go/total)](https://github.com/thxcode/gguf-packer-go/releases)
-[![Docker Pulls](https://img.shields.io/docker/pulls/thxcode/gguf-packer)](https://hub.docker.com/r/thxcode/gguf-packer)
-[![Release](https://img.shields.io/github/v/release/thxcode/gguf-packer-go)](https://github.com/thxcode/gguf-packer-go/releases/latest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gpustack/gguf-packer-go)](https://goreportcard.com/report/github.com/gpustack/gguf-packer-go)
+[![CI](https://img.shields.io/github/actions/workflow/status/gpustack/gguf-packer-go/cmd.yml?label=ci)](https://github.com/gpustack/gguf-packer-go/actions)
+[![License](https://img.shields.io/github/license/gpustack/gguf-packer-go?label=license)](https://github.com/gpustack/gguf-packer-go#license)
+[![Download](https://img.shields.io/github/downloads/gpustack/gguf-packer-go/total)](https://github.com/gpustack/gguf-packer-go/releases)
+[![Docker Pulls](https://img.shields.io/docker/pulls/gpustack/gguf-packer)](https://hub.docker.com/r/gpustack/gguf-packer)
+[![Release](https://img.shields.io/github/v/release/gpustack/gguf-packer-go)](https://github.com/gpustack/gguf-packer-go/releases/latest)
 
 [GGUF](https://github.com/ggerganov/ggml/blob/master/docs/gguf.md) is a file format for storing models for inference
 with GGML and executors based on GGML. GGUF is a binary format that is designed for fast loading and saving of models,
@@ -58,7 +58,7 @@ or [BuildKit daemon](https://github.com/moby/buildkit?tab=readme-ov-file#quick-s
 Create a `Dockefile` file with below content.
 
 ```dockerfile
-# syntax=thxcode/gguf-packer:latest
+# syntax=gpustack/gguf-packer:latest
 
 ARG        BASE=scratch
 ARG        QUANTIZE_TYPE=Q5_K_M
@@ -226,10 +226,10 @@ $ docker run --rm --interactive --tty ${REPO}/qwen2:0.5b-instruct-q5-k-m-demo2-i
 `GGUFPackerfile` is the preferred file name of the GGUF Packer frontend. It can be simply understood that when a
 `Dockerfile` is added with a specific syntax, this `Dockerfile` is equivalent to `GGUFPackerfile`.
 
-|              | Dockerfile                                                   | GGUFPackerfile                                                                                                                        |
-|--------------|--------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
-|              | # syntax=thxcode/gguf-packer:latest<br/>FROM scratch<br/>... | <br/>FROM scratch<br/>...                                                                                                             |
-| docker build | docker build \ <br/> --tag ${TAG} $(pwd) <br/> <br/> <br/>   | docker build \ <br/> --build-arg BUILDKIT_SYNTAX=thxcode/gguf-packer:latest \ <br/> --file GGUFPackerfile \ <br/> --tag ${TAG} $(pwd) |                                  
+|              | Dockerfile                                                    | GGUFPackerfile                                                                                                                         |
+|--------------|---------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+|              | # syntax=gpustack/gguf-packer:latest<br/>FROM scratch<br/>... | <br/>FROM scratch<br/>...                                                                                                              |
+| docker build | docker build \ <br/> --tag ${TAG} $(pwd) <br/> <br/> <br/>    | docker build \ <br/> --build-arg BUILDKIT_SYNTAX=gpustack/gguf-packer:latest \ <br/> --file GGUFPackerfile \ <br/> --tag ${TAG} $(pwd) |                                  
 
 See [examples](./examples) for more details.
 
@@ -264,7 +264,7 @@ INSTRUCTION arguments
 
 BuildKit treats lines that begin with `#` as a comment, unless the line is a
 valid [parser directive](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#parser-directives).
-When using `Dockerfile` file, A `# syntax=thxcode/gguf-packer:latest` must add to the top of the file,
+When using `Dockerfile` file, A `# syntax=gpustack/gguf-packer:latest` must add to the top of the file,
 see [Usage](#usage).
 
 ### Instructions
@@ -276,7 +276,7 @@ of [Dockerfile](https://github.com/moby/buildkit/blob/master/frontend/dockerfile
 which be able to add a quantified model file to the image or copy an original model from Hugging Face.
 
 ```dockerfile
-# syntax=thxcode/gguf-packer:latest
+# syntax=gpustack/gguf-packer:latest
 
 # add from http
 ADD https://huggingface.co/QuantFactory/Qwen2-0.5B-Instruct-GGUF/resolve/main/Qwen2-0.5B-Instruct.Q5_K_M.gguf /app/Qwen2-0.5B-Instruct.Q5_K_M.gguf
@@ -303,7 +303,7 @@ of [Dockerfile](https://github.com/moby/buildkit/blob/master/frontend/dockerfile
 which be able to use build-time variables.
 
 ```dockerfile
-# syntax=thxcode/gguf-packer:latest
+# syntax=gpustack/gguf-packer:latest
 
 ARG REPO=QuantFactory
 ARG MODEL=Qwen2-0.5B-Instruct
@@ -319,7 +319,7 @@ GGUFPackerfile supports global `ARG`s, which means you can use the same `ARG` in
 The `CAT` instruction allows you to concatenate content to a file.
 
 ```dockerfile
-# syntax=thxcode/gguf-packer:latest
+# syntax=gpustack/gguf-packer:latest
 
 CAT <<EOF /app/system-prompt.txt
 You are an AI assistant that follows instruction extremely well. Help as much as you can.
@@ -342,7 +342,7 @@ of [Dockerfile](https://github.com/moby/buildkit/blob/master/frontend/dockerfile
 support exec forms.
 
 ```dockerfile
-# syntax=thxcode/gguf-packer:latest
+# syntax=gpustack/gguf-packer:latest
 
 ARG CHAT_TEMPLATE="{% for message in messages %}{{'<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>' + '\n'}}{% endfor %}{% if add_generation_prompt %}{{ '<|im_start|>assistant\n' }}{% endif %}"
 
@@ -355,7 +355,7 @@ The `COPY` instruction follows the definition
 of [Dockerfile](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#copy).
 
 ```dockerfile
-# syntax=thxcode/gguf-packer:latest
+# syntax=gpustack/gguf-packer:latest
 
 # copy from local
 COPY Qwen2-0.5B-Instruct.Q5_K_M.gguf /app/
@@ -380,7 +380,7 @@ Dockerfile's guide.
 The `CONVERT` instruction allows you to convert safetensors model files to a GGUF model file.
 
 ```dockerfile
-# syntax=thxcode/gguf-packer:latest
+# syntax=gpustack/gguf-packer:latest
 
 ADD     https://huggingface.co/Qwen/Qwen2-0.5B-Instruct.git /app/Qwen2-0.5B-Instruct
 
@@ -407,7 +407,7 @@ The `FROM` instruction follows the definition
 of [Dockerfile](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#from).
 
 ```dockerfile
-# syntax=thxcode/gguf-packer:latest
+# syntax=gpustack/gguf-packer:latest
 
 FROM scratch 
 
@@ -421,7 +421,7 @@ The `LABEL` instruction follows the definition
 of [Dockerfile](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#label).
 
 ```dockerfile
-# syntax=thxcode/gguf-packer:latest
+# syntax=gpustack/gguf-packer:latest
 
 LABEL org.opencontainers.image.title="Qwen2-0.5B-Instruct" \
       org.opencontainers.image.description="Qwen2 0.5B Instruct model" \
@@ -454,7 +454,7 @@ All labels can be overridden by the Dockerfile/GGUFPackerfile.
 The `QUANTIZE` instruction allows you to quantize a GGUF file.
 
 ```dockerfile
-# syntax=thxcode/gguf-packer:latest
+# syntax=gpustack/gguf-packer:latest
 
 # quantize a GGUF file from current stage
 CONVERT  --type=F16 /app/Qwen2-0.5B-Instruct /app/Qwen2-0.5B-Instruct.F16.gguf

@@ -1,4 +1,4 @@
-# syntax=thxcode/gguf-packer:latest
+# syntax=gpustack/gguf-packer:latest
 
 ARG        BASE=scratch
 ARG        QUANTIZE_TYPE=Q5_K_M

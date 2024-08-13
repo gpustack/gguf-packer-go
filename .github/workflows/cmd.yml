@@ -68,7 +68,7 @@ jobs:
     timeout-minutes: 15
     runs-on: ubuntu-22.04
     env:
-      PACKAGE_REGISTRY: "thxcode"
+      PACKAGE_REGISTRY: "gpustack"
       PACKAGE_IMAGE: "gguf-packer"
     steps:
       - name: Checkout

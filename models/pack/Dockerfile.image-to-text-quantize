@@ -1,4 +1,4 @@
-# syntax=thxcode/gguf-packer:latest
+# syntax=gpustack/gguf-packer:latest
 
 ARG        MODEL_VENDOR="xtuner"
 ARG        MODEL_REPOSITORY="xtuner/llava-phi-3-mini-gguf"

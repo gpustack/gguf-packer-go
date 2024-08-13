@@ -7,7 +7,7 @@ supports [adding files from a URL](https://github.com/moby/buildkit/blob/master/
 but it doesn't support Git LFS, see https://github.com/moby/buildkit/pull/5212.
 
 In this example, we use
-a [containerizing buildkitd](https://hub.docker.com/repository/docker/thxcode/buildkit/tags) which supports Git LFS to
+a [containerizing buildkitd](https://hub.docker.com/repository/docker/thxCode/buildkit/tags) which supports Git LFS to
 finish the demonstration.
 
 This example demonstrates how to add a model from a Git repository with Git LFS.
@@ -40,16 +40,16 @@ $ cd gguf-packer-go/examples/ggufpackerfiles/add-from-git
 3. Start buildkitd.
 
 ```shell
-$ docker buildx create --name "git-lfs" --driver "docker-container" --driver-opt "image=thxcode/buildkit:v0.15.1-git-lfs" --buildkitd-flags "--allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host" --bootstrap 
+$ docker buildx create --name "git-lfs" --driver "docker-container" --driver-opt "image=gpustack/buildkit:v0.15.1-git-lfs" --buildkitd-flags "--allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host" --bootstrap 
 ```   
 
 4. Build this example.
 
 ```shell
-$ docker build --builder git-lfs --build-arg BUILDKIT_SYNTAX=thxcode/gguf-packer:latest --file GGUFPackerfile --tag add-from-git/qwen2:0.5b-instruct-q5-k-m --load $(pwd)
+$ docker build --builder git-lfs --build-arg BUILDKIT_SYNTAX=gpustack/gguf-packer:latest --file GGUFPackerfile --tag add-from-git/qwen2:0.5b-instruct-q5-k-m --load $(pwd)
 
 $ # or build with external buildkitd as below, see https://github.com/moby/buildkit.
-$ # buildctl build --frontend gateway.v0 --opt source=thxcode/gguf-packer:latest --local context=$(pwd) --output type=docker,name=add-from-git/qwen2:0.5b-instruct-q5-k-m | docker load
+$ # buildctl build --frontend gateway.v0 --opt source=gpustack/gguf-packer:latest --local context=$(pwd) --output type=docker,name=add-from-git/qwen2:0.5b-instruct-q5-k-m | docker load
 ```
 
 5. Review the result.

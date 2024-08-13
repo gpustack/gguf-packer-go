@@ -27,10 +27,10 @@ $ cd gguf-packer-go/examples/ggufpackerfiles/from-alpine
 3. Build this example.
 
 ```shell
-$ docker build --build-arg BUILDKIT_SYNTAX=thxcode/gguf-packer:latest --file GGUFPackerfile --tag from-alpine/qwen2:0.5b-instruct-q5-k-m --load $(pwd)
+$ docker build --build-arg BUILDKIT_SYNTAX=gpustack/gguf-packer:latest --file GGUFPackerfile --tag from-alpine/qwen2:0.5b-instruct-q5-k-m --load $(pwd)
 
 $ # or build with external buildkitd as below, see https://github.com/moby/buildkit.
-$ # buildctl build --frontend gateway.v0 --opt source=thxcode/gguf-packer:latest --local context=$(pwd) --output type=docker,name=from-alpine/qwen2:0.5b-instruct-q5-k-m | docker load
+$ # buildctl build --frontend gateway.v0 --opt source=gpustack/gguf-packer:latest --local context=$(pwd) --output type=docker,name=from-alpine/qwen2:0.5b-instruct-q5-k-m | docker load
 ```
 
 4. Review the result.

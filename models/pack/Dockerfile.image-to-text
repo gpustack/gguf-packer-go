@@ -1,4 +1,4 @@
-# syntax=thxcode/gguf-packer:latest
+# syntax=gpustack/gguf-packer:latest
 
 ARG        MODEL_VENDOR="second-state"
 ARG        MODEL_REPOSITORY="second-state/Llava-v1.5-7B-GGUF"

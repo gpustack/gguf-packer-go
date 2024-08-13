@@ -1,4 +1,4 @@
-# syntax=thxcode/gguf-packer:latest
+# syntax=gpustack/gguf-packer:latest
 
 ARG        MODEL_VENDOR="google"
 ARG        MODEL_REPOSITORY="google/codegemma-7b-it-GGUF"
