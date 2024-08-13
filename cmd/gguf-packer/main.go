@@ -141,7 +141,6 @@ func tfprint(w io.Writer, border bool, header []string, mergeCells []int, body .
 	}
 
 	tb.Render()
-	fmt.Println()
 }
 
 func jprint(w io.Writer, v any) {

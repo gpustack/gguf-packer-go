@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/awslabs/amazon-ecr-credential-helper/ecr-login"
 	"github.com/chrismellard/docker-credential-acr-env/pkg/credhelper"
@@ -23,8 +23,9 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	specs "github.com/gpustack/gguf-packer-go/buildkit/frontend/specs/v1"
-	"github.com/gpustack/gguf-packer-go/util/funcx"
 	"github.com/gpustack/gguf-packer-go/util/osx"
+	"github.com/gpustack/gguf-packer-go/util/ptr"
+	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 )
 
@@ -66,14 +67,6 @@ func pull(app string) *cobra.Command {
 			if osx.ExistsLink(mdp) && !force {
 				return nil
 			}
-
-			slog.Info("retrieving")
-			defer func() {
-				if err != nil {
-					return
-				}
-				slog.Info("done")
-			}()
 
 			var img conreg.Image
 			{
@@ -148,13 +141,38 @@ func pull(app string) *cobra.Command {
 			}
 
 			for i := range ls {
-				slog.Info("extracting", "layers", fmt.Sprintf("%d/%d", i+1, len(ls)))
+				s, err := ls[i].Size()
+				if err != nil {
+					return fmt.Errorf("getting layer size: %w", err)
+				}
+				d, err := ls[i].Digest()
+				if err != nil {
+					return fmt.Errorf("getting layer digest: %w", err)
+				}
 				l, err := ls[i].Uncompressed()
 				if err != nil {
 					return fmt.Errorf("reading layer contents: %w", err)
 				}
-				if _, err = archive.Apply(c.Context(), lsp, l, archive.WithNoSameOwner()); err != nil {
-					return fmt.Errorf("extracting layer %q: %w", funcx.NoError(ls[i].Digest()), err)
+				pb := progressbar.NewOptions64(s,
+					progressbar.OptionSetDescription(sprintf("[%d/%d]", i+1, len(ls))),
+					progressbar.OptionSetWriter(c.OutOrStderr()),
+					progressbar.OptionSetWidth(30),
+					progressbar.OptionThrottle(65*time.Millisecond),
+					progressbar.OptionShowBytes(true),
+					progressbar.OptionShowCount(),
+					progressbar.OptionSetPredictTime(false),
+					progressbar.OptionSpinnerType(14),
+					progressbar.OptionSetRenderBlankState(true))
+				if _, err = archive.Apply(c.Context(), lsp, ptr.To(progressbar.NewReader(l, pb)), archive.WithNoSameOwner()); err != nil {
+					_ = l.Close()
+					_ = pb.Clear()
+					return fmt.Errorf("extracting layer %q: %w", d, err)
+				}
+				_ = pb.Clear()
+				if cl, ok := l.(cacheLayerReadCloser); ok {
+					if err = cl.Complete(); err != nil {
+						return fmt.Errorf("completing layer %q: %w", d, err)
+					}
 				}
 			}
 
@@ -219,11 +237,11 @@ func retrieveOCIImage(rd *remote.Descriptor) (img conreg.Image, err error) {
 		if err != nil {
 			return nil, fmt.Errorf("getting model from index: %w", err)
 		}
-		return img, nil
-	}
-	img, err = rd.Image()
-	if err != nil {
-		return nil, fmt.Errorf("getting model: %w", err)
+	} else {
+		img, err = rd.Image()
+		if err != nil {
+			return nil, fmt.Errorf("getting model: %w", err)
+		}
 	}
 	img = cache.Image(img, cacheLayers(getBlobsStorePath()))
 	return img, nil
@@ -304,7 +322,9 @@ type cacheLayer struct {
 }
 
 func (c *cacheLayer) Compressed() (io.ReadCloser, error) {
-	f, err := osx.CreateFile(c.DigestPath, 0700)
+	tmp := c.DigestPath + ".tmp"
+
+	f, err := osx.CreateFile(tmp, 0700)
 	if err != nil {
 		return nil, err
 	}
@@ -313,14 +333,17 @@ func (c *cacheLayer) Compressed() (io.ReadCloser, error) {
 		return nil, err
 	}
 	cr := cacheLayerReadCloser{
-		Reader:  io.TeeReader(rc, f),
-		Closers: []io.Closer{rc, f},
+		Reader:   io.TeeReader(rc, f),
+		Closers:  []io.Closer{rc, f},
+		Complete: func() error { return os.Rename(tmp, c.DigestPath) },
 	}
 	return cr, nil
 }
 
 func (c *cacheLayer) Uncompressed() (io.ReadCloser, error) {
-	f, err := osx.CreateFile(c.DiffIDPath, 0700)
+	tmp := c.DigestPath + ".tmp"
+
+	f, err := osx.CreateFile(tmp, 0700)
 	if err != nil {
 		return nil, err
 	}
@@ -329,8 +352,9 @@ func (c *cacheLayer) Uncompressed() (io.ReadCloser, error) {
 		return nil, err
 	}
 	cr := cacheLayerReadCloser{
-		Reader:  io.TeeReader(rc, f),
-		Closers: []io.Closer{rc, f},
+		Reader:   io.TeeReader(rc, f),
+		Closers:  []io.Closer{rc, f},
+		Complete: func() error { return os.Rename(tmp, c.DiffIDPath) },
 	}
 	return cr, nil
 }
@@ -338,7 +362,8 @@ func (c *cacheLayer) Uncompressed() (io.ReadCloser, error) {
 type cacheLayerReadCloser struct {
 	io.Reader
 
-	Closers []io.Closer
+	Closers  []io.Closer
+	Complete func() error
 }
 
 func (c cacheLayerReadCloser) Close() (err error) {
