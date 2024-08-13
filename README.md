@@ -412,7 +412,7 @@ of [Dockerfile](https://github.com/moby/buildkit/blob/master/frontend/dockerfile
 FROM scratch 
 
 # reference another model
-FROM gpustack/qwen2:0.5b-instruct-q5-k-m
+FROM thxcode/qwen2:0.5b-instruct-q5-k-m
 ```
 
 #### LABEL

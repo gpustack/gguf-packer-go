@@ -19,6 +19,7 @@ on:
       - "**.mdx"
       - "**.png"
       - "**.jpg"
+      - "examples/**"
       - "models/**"
       - ".github/workflows/models-*.yml"
     tags:

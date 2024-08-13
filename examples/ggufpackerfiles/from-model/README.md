@@ -2,7 +2,7 @@
 
 This example demonstrates how to reuse an existing model image.
 
-- Refer to the `gpustack/qwen2:0.5B-instruct-q5-k-m` image as the base image.
+- Refer to the `thxcode/qwen2:0.5B-instruct-q5-k-m` image as the base image.
 - Customize new system prompt.
 - Reuse the parameters from base image.
 

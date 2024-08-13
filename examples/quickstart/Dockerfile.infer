@@ -1,4 +1,5 @@
 # syntax=docker/dockerfile:1.7-labs
+
 ARG  REPO=""
 FROM ${REPO}/qwen2:0.5b-instruct-q5-k-m-demo2
 RUN  apt-get update && \
