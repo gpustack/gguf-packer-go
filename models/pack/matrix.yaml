@@ -1,8 +1,8 @@
 # NB(thxCode): The chosen rules of quantified models.
 # 1. In general, recommend to use Q5_K_M, Q4_K_M, Q4_K_S, Q4_0, Q3_K_M, or Q3_K_S,
 #    but for some sufficiently small models, like Embedding, it is recommended to use F16.
-# 2. When packing with normal GitHub Action runner, the total size of all GGUF files cannot exceed 45GB,
-#    the largest model is about 70B parameters.
+# 2. When packing with normal GitHub Action runner, the total size of all GGUF files cannot exceed 41GB,
+#    the largest model is about 72B parameters.
 #
 include:
   #
@@ -134,8 +134,8 @@ include:
   - name: "qwen2"
     usage: "text-to-text"
     tag: "72b"
-    repository: "mradermacher/Qwen2-72B-GGUF"
-    file: "Qwen2-72B.Q4_K_S.gguf"
+    repository: "mradermacher/Qwen2-72B-i1-GGUF"
+    file: "Qwen2-72B.i1-Q4_0.gguf"
   - name: "qwen2"
     usage: "text-to-text"
     tag: "72b-instruct"

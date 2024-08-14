@@ -22,6 +22,11 @@ on:
         required: true
         type: string
         default: ""
+      model_override_tags:
+        description: "Model Override Tags"
+        required: false
+        type: string
+        default: ""
 
 jobs:
   generate-matrix:
@@ -37,22 +42,34 @@ jobs:
       - name: Set Matrix
         id: set-matrix
         run: |
-          #!/bin/bash
+          #!/usr/bin/env bash
+          
+          declare -A OVERRIDE_MODELS_MAP=()
+          
+          if [[ -n "${{ github.event.inputs.model_override_tags }}" ]]; then
+            OVERRIDE_TAGS="$(echo "${{ github.event.inputs.model_override_tags }}" | tr ',' '\n' | jq -R . | jq -s -c .)"
+            OVERRIDE_MODELS=$(echo "${OVERRIDE_TAGS}" | jq -r '.[] | "docker.io/${{ github.event.inputs.model_repository }}/${{ github.event.inputs.model_name }}:\(.)"')
+            for MODEL in $OVERRIDE_MODELS; do
+              OVERRIDE_MODELS_MAP[$MODEL]=$MODEL
+            done
+          fi
           
           CANDIDATES="$(yq 'map(.[] | select(.name == "${{ github.event.inputs.model_name }}"))' --output-format json --indent 0 ${{ github.workspace }}/models/pack/matrix.yaml)"
-          
-          MODELS=$(echo "${CANDIDATES}" | jq -r '.[] | "docker.io/${{ github.event.inputs.model_repository }}/\(.name):\(.tag)"')
+          MODELS=$(echo "${CANDIDATES}" | jq -r '.[] | "docker.io/${{ github.event.inputs.model_repository }}/${{ github.event.inputs.model_name }}:\(.tag)"')
           EXISTING_MODELS=()
           for MODEL in $MODELS; do
-              if oras manifest fetch $MODEL &> /dev/null; then
-                EXISTING_MODELS+=($MODEL)
-              fi
+            if [[ -v OVERRIDE_MODELS_MAP[$MODEL] ]]; then
+              continue;
+            fi
+            if oras manifest fetch $MODEL &> /dev/null; then
+              EXISTING_MODELS+=($MODEL)
+            fi
           done
           
           if [[ ${#EXISTING_MODELS[@]} -eq 0 ]]; then
             MATRIX="${CANDIDATES}"
           else
-            MATRIX=$(echo "${CANDIDATES}" | jq -c --argjson existing "$(printf '%s\n' "${EXISTING_MODELS[@]}" | jq -R . | jq -s -c .)" 'map(select("\(.name):\(.tag)" as $img | $existing | index("docker.io/${{ github.event.inputs.model_repository }}/" + $img) | not))')
+            MATRIX=$(echo "${CANDIDATES}" | jq -c --argjson existing "$(printf '%s\n' "${EXISTING_MODELS[@]}" | jq -R . | jq -s -c .)" 'map(select("${{ github.event.inputs.model_name }}:\(.tag)" as $img | $existing | index("docker.io/${{ github.event.inputs.model_repository }}/" + $img) | not))')
           fi
           
           echo "matrix=${MATRIX}" >> "$GITHUB_OUTPUT"
@@ -88,7 +105,7 @@ jobs:
       - name: Prepare
         id: prepare
         run: |
-          #!/bin/bash
+          #!/usr/bin/env bash
           
           echo "Get outputs"
           MODEL_VENDOR="$(echo "${{ matrix.repository }}" | cut -d'/' -f1)"
@@ -111,6 +128,6 @@ jobs:
             "${{ github.event.inputs.model_repository }}/${{ matrix.name }}:${{ matrix.tag }}"
       - name: Review Space Usage
         run: |
-          #!/bin/bash
+          #!/usr/bin/env bash
 
           df -h

@@ -25,7 +25,7 @@ runs:
     - name: Pre
       shell: bash
       run: |
-        #!/bin/bash
+        #!/usr/bin/env bash
         
         echo "Memory and swap:"
         sudo free
@@ -39,7 +39,7 @@ runs:
     - name: Action
       shell: bash
       run: |
-        #!/bin/bash
+        #!/usr/bin/env bash
         
         DOCKER_WORKSPACE="/var/lib/docker"
         if [[ ! -d "${DOCKER_WORKSPACE}" ]]; then
@@ -152,7 +152,7 @@ runs:
     - name: Post
       shell: bash
       run: |
-        #!/bin/bash
+        #!/usr/bin/env bash
         
         echo "Memory and swap:"
         sudo free

@@ -78,7 +78,7 @@ jobs:
           HF_TOKEN: ${{ secrets.CI_HUGGINGFACE_TOKEN }}
           CONVERT_TYPE: ${{ github.event.inputs.model_convert_type }}
         run: |
-          #!/bin/bash
+          #!/usr/bin/env bash
           
           echo "Get Dockerfile"
           MODEL_VENDOR="$(echo "${{ github.event.inputs.huggingface_repository }}" | cut -d'/' -f1)"
@@ -86,7 +86,7 @@ jobs:
           cat <<EOF > ${{ github.workspace }}/Dockerfile
           # syntax=gpustack/gguf-packer:latest
           FROM       scratch AS model
-          ADD        https://gpustack:${HF_TOKEN}@huggingface.co/${{ github.event.inputs.huggingface_repository }} ${MODEL_NAME}
+          ADD        https://gpustack:${HF_TOKEN}@huggingface.co/${{ github.event.inputs.huggingface_repository }}.git ${MODEL_NAME}
           FROM       scratch
           LABEL      gguf.model.from="Hugging Face"
           LABEL      gguf.model.usage="${{ github.event.inputs.model_usage }}"
@@ -108,7 +108,7 @@ jobs:
             "${{ github.event.inputs.model_repository }}/${{ github.event.inputs.model_name }}:${{ github.event.inputs.model_tag }}-${{ steps.prepare.outputs.model_suffix }}"
       - name: Review Space Usage
         run: |
-          #!/bin/bash
+          #!/usr/bin/env bash
           
           df -h
 
@@ -138,7 +138,7 @@ jobs:
           CONVERT_TYPE: ${{ github.event.inputs.model_convert_type }}
           QUANTIZE_TYPE: ${{ matrix.type }}
         run: |
-          #!/bin/bash
+          #!/usr/bin/env bash
 
           echo "Get Dockerfile"
           MODEL_VENDOR="$(echo "${{ github.event.inputs.huggingface_repository }}" | cut -d'/' -f1)"
