@@ -1,6 +1,6 @@
 # GGUF Packer
 
-> tl;dr, Deliver LLMs of [GGUF](https://github.com/ggerganov/ggml/blob/master/docs/gguf.md) via Dockerfile.
+> tl;dr, Deliver LLMs of [GGUF](https://github.com/ggerganov/ggml/blob/master/docs/gguf.md) format via Dockerfile.
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/gpustack/gguf-packer-go)](https://goreportcard.com/report/github.com/gpustack/gguf-packer-go)
 [![CI](https://img.shields.io/github/actions/workflow/status/gpustack/gguf-packer-go/cmd.yml?label=ci)](https://github.com/gpustack/gguf-packer-go/actions)
