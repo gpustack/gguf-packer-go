@@ -45,3 +45,16 @@ func ProjectWithPrefix[V any](oldMap map[string]V, prefix string) (newMap map[st
 		return _k, _k != k
 	})
 }
+
+// Value returns the value of a key in a map,
+// if the key does not exist, the default value will be returned.
+func Value[K comparable, V any](m map[K]V, key K, defVal ...V) V {
+	v, ok := m[key]
+	if ok {
+		return v
+	}
+	if len(defVal) > 0 {
+		return defVal[0]
+	}
+	return v
+}

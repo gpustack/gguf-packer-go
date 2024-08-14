@@ -38,16 +38,16 @@ func estimate(app string) *cobra.Command {
 		Use:   "estimate MODEL",
 		Short: "Estimate the model memory usage.",
 		Example: sprintf(`  # Estimate the model memory usage
-  %s estimate gpustack/qwen2:latest
+  %s estimate gpustack/qwen2:0.5b-instruct
 
   # Estimate the model memory usage from remote
-  %[1]s estimate gpustack/qwen2:latest --force
+  %[1]s estimate gpustack/qwen2:0.5b-instruct --force
 
   # Estimate the model memory usage with overrided flags
-  %[1]s estimate gpustack/qwen2:latest --gpu-layers 10 --flash-attention
+  %[1]s estimate gpustack/qwen2:0.5b-instruct --gpu-layers 10 --flash-attention
 
   # Estimate the model memory usage step by step
-  %[1]s estimate gpustack/qwen2:latest --offload-layers-step 1`, app),
+  %[1]s estimate gpustack/qwen2:0.5b-instruct --offload-layers-step 1`, app),
 		Args: cobra.ExactArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
 			model := args[0]

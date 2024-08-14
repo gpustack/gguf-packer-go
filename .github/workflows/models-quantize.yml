@@ -86,12 +86,12 @@ jobs:
           cat <<EOF > ${{ github.workspace }}/Dockerfile
           # syntax=gpustack/gguf-packer:latest
           FROM       scratch AS model
-          ADD        https://gpustack:${HF_TOKEN}@huggingface.co/${{ github.event.inputs.huggingface_repository }} /model
+          ADD        https://gpustack:${HF_TOKEN}@huggingface.co/${{ github.event.inputs.huggingface_repository }} ${MODEL_NAME}
           FROM       scratch
           LABEL      gguf.model.from="Hugging Face"
           LABEL      gguf.model.usage="${{ github.event.inputs.model_usage }}"
           LABEL      gguf.model.vendor="${MODEL_VENDOR}"
-          CONVERT    --from=model --type=${CONVERT_TYPE} /model ${MODEL_NAME}.${CONVERT_TYPE}.gguf
+          CONVERT    --from=model --type=${CONVERT_TYPE} ${MODEL_NAME} ${MODEL_NAME}.${CONVERT_TYPE}.gguf
           CMD        ["-m", "${MODEL_NAME}.${CONVERT_TYPE}.gguf", "-c", "8192", "-np", "4"]
           EOF
           

@@ -57,22 +57,22 @@ func main() {
   %[1]s llb-dump
 
   # Pull the model from the registry
-  %[1]s pull gpustack/qwen2:latest
+  %[1]s pull gpustack/qwen2:0.5b-instruct
 
   # Inspect the model
-  %[1]s inspect gpustack/qwen2:latest
+  %[1]s inspect gpustack/qwen2:0.5b-instruct
 
   # Estimate the model memory usage
-  %[1]s estimate gpustack/qwen2:latest
+  %[1]s estimate gpustack/qwen2:0.5b-instruct
 
   # List all local models
   %[1]s list
 
   # Remove a local model
-  %[1]s remove gpustack/qwen2:latest
+  %[1]s remove gpustack/qwen2:0.5b-instruct
 
-  # Run a model via Docker container: ghcr.io/ggerganov/llama.cpp:server
-  %[1]s run gpustack/qwen2:latest`, app),
+  # Run a model by container container: ghcr.io/ggerganov/llama.cpp:server
+  %[1]s run gpustack/qwen2:0.5b-instruct`, app),
 	}
 	for _, cmdCreate := range []func(string) *cobra.Command{
 		llbFrontend, llbDump, inspect, pull, estimate, list, remove, run,

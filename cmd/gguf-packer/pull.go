@@ -39,10 +39,10 @@ func pull(app string) *cobra.Command {
 		Use:   "pull MODEL",
 		Short: "Download a model from a registry.",
 		Example: sprintf(`  # Download a model
-  %[1]s pull gpustack/qwen2:latest
+  %[1]s pull gpustack/qwen2:0.5b-instruct
 
   # Force download a model from remote
-  %[1]s pull gpustack/qwen2:latest --force`, app),
+  %[1]s pull gpustack/qwen2:0.5b-instruct --force`, app),
 		Args: cobra.ExactArgs(1),
 		RunE: func(c *cobra.Command, args []string) (err error) {
 			model := args[0]

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/dustin/go-humanize"
+	"github.com/gpustack/gguf-packer-go/util/mapx"
 	"github.com/gpustack/gguf-packer-go/util/osx"
 	"github.com/spf13/cobra"
 )
@@ -30,6 +31,7 @@ func list(app string) *cobra.Command {
 					"Params",
 					"Bpw",
 					"Type",
+					"Usage",
 					"Created",
 					"Size",
 				}
@@ -69,6 +71,7 @@ func list(app string) *cobra.Command {
 					params := img.Config.Model.Parameters
 					bpw := img.Config.Model.BitsPerWeight
 					fileType := img.Config.Model.FileType
+					usage := mapx.Value(img.Config.Labels, "gguf.model.usage", "unknown")
 					created := img.Created
 					size := img.Config.Size
 
@@ -80,6 +83,7 @@ func list(app string) *cobra.Command {
 						sprintf(params),
 						sprintf(bpw),
 						sprintf(fileType),
+						sprintf(usage),
 						sprintf(tenary(created != nil, humanize.Time(*created), "unknown")),
 						sprintf(size),
 					})

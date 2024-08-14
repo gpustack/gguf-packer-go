@@ -24,10 +24,10 @@ func inspect(app string) *cobra.Command {
 		Use:   "inspect MODEL",
 		Short: "Get the low-level information of a model.",
 		Example: sprintf(`  # Inspect a model
-  %s inspect gpustack/qwen2:latest
+  %s inspect gpustack/qwen2:0.5b-instruct
 
   # Force inspect a model from remote
-  %[1]s inspect gpustack/qwen2:latest --force`, app),
+  %[1]s inspect gpustack/qwen2:0.5b-instruct --force`, app),
 		Args: cobra.ExactArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
 			model := args[0]

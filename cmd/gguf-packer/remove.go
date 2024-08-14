@@ -17,7 +17,7 @@ func remove(app string) *cobra.Command {
 		Use:   "remove MODEL [MODEL...]",
 		Short: "Remove one or more local models.",
 		Example: sprintf(`  # Remove local model by name
-  %s remove gpustack/qwen2:latest
+  %s remove gpustack/qwen2:0.5b-instruct
 
   # Remove local model by ID
   %s remove 6e76cdbc3a21`, app),

@@ -27,16 +27,16 @@ func run(app string) *cobra.Command {
 		Use:   "run MODEL [ARG...]",
 		Short: "Run a model by specific process, like container image or executable binary.",
 		Example: sprintf(`  # Run a model by container image: ghcr.io/ggerganov/llama.cpp:server
-  %s run gpustack/qwen2:latest
+  %s run gpustack/qwen2:0.5b-instruct
 
   # Customize model running
-  %[1]s run gpustack/qwen2:latest -- --port 8888 -c 8192 -np 4
+  %[1]s run gpustack/qwen2:0.5b-instruct -- --port 8888 -c 8192 -np 4
 
   # Run a model by executable binary: llama-box
-  %[1]s run gpustack/qwen2:latest --by llama-box
+  %[1]s run gpustack/qwen2:0.5b-instruct --by llama-box
 
   # Dry run to print the command that would be executed
-  %[1]s run gpustack/qwen2:latest --dry-run`, app),
+  %[1]s run gpustack/qwen2:0.5b-instruct --dry-run`, app),
 		Args:                  cobra.MinimumNArgs(1),
 		DisableFlagsInUseLine: true,
 		FParseErrWhitelist: cobra.FParseErrWhitelist{
