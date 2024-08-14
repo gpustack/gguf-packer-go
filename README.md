@@ -14,16 +14,17 @@ with GGML and executors based on GGML. GGUF is a binary format that is designed 
 and for ease of reading. Models are traditionally developed using PyTorch or another framework, and then converted to
 GGUF for use in GGML.
 
-GGUF Packer can help you to build Large Language Model (LLM) distributions, all you need is
-a [Docker](https://www.docker.com/)(
-or [BuildKit daemon](https://github.com/moby/buildkit?tab=readme-ov-file#quick-start)).
+GGUF Packer aids in building Large Language Model (LLM) distributions. All you need is [Docker](https://www.docker.com/)
+(or [BuildKit daemon](https://github.com/moby/buildkit?tab=readme-ov-file#quick-start)).
 
-- GGUF Packer implements the [BuildKit](https://github.com/moby/buildkit) frontend to leverage all the features of
-  BuildKit.
-- Use Dockerfile directly instead of
-  the [Ollama Model File](https://github.com/ollama/ollama/blob/main/docs/modelfile.md).
-- [CloudNative](https://www.cncf.io/) friendly,
-  see [KEP-4639 OCI VolumeSource PoC](https://github.com/kubernetes/kubernetes/issues/125463).
+## Key Features
+
+- **Efficient Distribution**: GGUF Packer uses the [BuildKit](https://github.com/moby/buildkit) frontend to streamline
+  the building of LLM distributions.
+- **Docker Integration**: It leverages Docker and BuildKit for seamless build process, allowing the use of Dockerfile
+  directly instead of the [Ollama Model File](https://github.com/ollama/ollama/blob/main/docs/modelfile.md).
+- **[Cloud-Native](https://www.cncf.io/)  Support**: It aligns with cloud-native practices,
+  referencing [KEP-4639 OCI VolumeSource PoC](https://github.com/kubernetes/kubernetes/issues/125463).
 
 ## Agenda
 
@@ -44,19 +45,17 @@ or [BuildKit daemon](https://github.com/moby/buildkit?tab=readme-ov-file#quick-s
     + [Docker Image](#docker-image)
     + [OCI Distribution](#oci-distribution)
     + [Ollama Model](#ollama-model)
-    + [Conclusion](#conclusion)
 
 ## Quick Start
 
-### Requirements
+### Prerequisites
 
-- [Docker](https://docs.docker.com/engine/install/)
-- [GGUF Packer](./cmd/gguf-packer) from [releases](https://github.com/gpustack/gguf-packer-go/releases)
-  or `go install github.com/gpustack/gguf-packer-go/cmd/gguf-packer` from HEAD.
+Install [Docker](https://docs.docker.com/engine/install/)
+and [GGUF Packer](https://github.com/gpustack/gguf-packer-go/releases).
 
 ### Write Dockerfile
 
-Create a `Dockefile` file with below content.
+To get started, create a `Dockefile` file with the following content:
 
 ```dockerfile
 # syntax=gpustack/gguf-packer:latest
@@ -84,9 +83,10 @@ EOF
 CMD        ["-m", "Qwen2-0.5B-Instruct.${QUANTIZE_TYPE}.gguf", "-c", "8192", "--system-prompt-file", "system-prompt.txt", "--chat-template", "${CHAT_TEMPLATE}"]
 ```
 
-The above `Dockerfile` will build a LLM distribution with
-the [Qwen2-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2-0.5B-Instruct/tree/main) model, which is quantized
-by `Q5_K_M`.
+The provided `Dockerfile` will build a distribution package for
+the [Qwen2-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2-0.5B-Instruct/tree/main) large language model (LLM). The
+model has been quantized using the `Q5_K_M` quantization technique, which reduces the model size and inference latency
+without significantly impacting accuracy.
 
 - `ARG BASE=...`: The base image for the build, default is `scratch`.
 - `ARG QUANTIZE_TYPE=...`: The quantize type for the model, default is `Q5_K_M`.
@@ -103,17 +103,18 @@ by `Q5_K_M`.
 
 ### Build Model
 
-`ADD` instruction allows cloning the model from the Git repository, however, the Git LFS is not supported yet,
-see [moby/buildkit#5212](https://github.com/moby/buildkit/pull/5212). We can use a developing buildkitd to archive the
-goal.
+The `ADD` instruction allows you to clone the model from a Git repository. However, please note that the Git LFS (Large
+File Storage) is not yet supported(see [moby/buildkit#5212](https://github.com/moby/buildkit/pull/5212)). To achieve
+this functionality, you can use a development version of BuildKit.
 
-First, set up a containerizing buildkitd.
+First, set up a BuildKit daemon by running the command:
 
 ```shell
 $ docker buildx create --name "git-lfs" --driver "docker-container" --driver-opt "image=thxcode/buildkit:v0.15.1-git-lfs" --buildkitd-flags "--allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host" --bootstrap 
 ```
 
-Then, build and publish the model. With `--push` argument, the built model will be published to the Docker registry.
+Next, build and publish your model. By including the `--push` argument, the built model will be automatically published
+to the Docker registry:
 
 ```shell
 $ export REPO="YOUR_REPOSITORY"
@@ -122,7 +123,7 @@ $ docker build --builder git-lfs --tag ${REPO}/qwen2:0.5b-instruct-q5-k-m-demo -
 
 ### Estimate Model Memory Usage
 
-After the build is completed, we can use `gguf-packer` to estimate the model.
+Once the building process is complete, we can utilize `gguf-packer` to estimate the model:
 
 ```shell
 $ gguf-packer estimate ${REPO}/qwen2:0.5b-instruct-q5-k-m-demo
@@ -135,7 +136,7 @@ $ gguf-packer estimate ${REPO}/qwen2:0.5b-instruct-q5-k-m-demo
 
 ### Build Model with other Quantize Type
 
-We can build the model with other quantize types by setting the `QUANTIZE_TYPE` argument.
+You can build the model using various quantization types by setting the `QUANTIZE_TYPE` argument:
 
 ```shell
 $ export QUANTIZE_TYPE="Q4_K_M" 
@@ -146,7 +147,7 @@ With build cache, the total build time will be reduced.
 
 ### Pull Model from Container Image Registry
 
-We can pull the published models from the Docker registry by `gguf-packer`.
+You can retrieve the published models from the Docker registry using `gguf-packer`:
 
 ```shell
 $ gguf-packer pull ${REPO}/qwen2:0.5b-instruct-q5-k-m-demo
@@ -160,14 +161,15 @@ $ gguf-packer list
 
 ### Run Model
 
-We can use `gguf-packer` to run a local model
-with [ghcr.io/ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp/pkgs/container/llama.cpp).
+To run a local model
+using [ghcr.io/ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp/pkgs/container/llama.cpp), you can utilize
+the gguf-packer:
 
 ```shell
 $ gguf-packer run ${REPO}/qwen2:0.5b-instruct-q5-k-m-demo -- --flash-attn
 ```
 
-Or get the running command with `--dry-run`.
+You can preview the running command by using the `--dry-run` option:
 
 ```shell
 $ gguf-packer run ${REPO}/qwen2:0.5b-instruct-q5-k-m-demo --dry-run -- --flash-attn
@@ -177,16 +179,16 @@ docker run --rm --interactive --tty --privileged --publish 8080:8080 --volume ${
 
 ### Refer Model
 
-Since the `${REPO}/qwen2:0.5b-instruct-q5-k-m-demo` is a standard OCI Artifact, we can refer it via `FROM` in other
-Dockerfiles.
+Since the `${REPO}/qwen2:0.5b-instruct-q5-k-m-demo` is a standard OCI Artifact, you can refer it using the `FROM`
+instruction in other Dockerfiles.
 
-Let's build a model based on [Ubuntu:22.04](https://hub.docker.com/_/ubuntu/tags).
+You can rebuild a model based on [Ubuntu:22.04](https://hub.docker.com/_/ubuntu/tags).
 
 ```shell
 $ docker build --builder git-lfs --tag ${REPO}/qwen2:0.5b-instruct-q5-k-m-demo2 --build-arg BASE=ubuntu:22.04 --load --push $(pwd)
 ```
 
-Create a `Dockerfile.infer` file with below content.
+To proceed, create a file named `Dockerfile.infer` with the following content:
 
 ```dockerfile
 # syntax=docker/dockerfile:1.7-labs
@@ -210,13 +212,13 @@ CMD ["-m", "Qwen2-0.5B-Instruct.Q5_K_M.gguf", "-c", "8192", "--system-prompt-fil
 - `ENTRYPOINT ...`: Specify the default commands.
 - `CMD ...`: Specify the default commands.
 
-Build the inference image.
+Once the `Dockerfile.infer` is created, you can build the container image using the following command:
 
 ```shell
 $ docker build --builder git-lfs --tag ${REPO}/qwen2:0.5b-instruct-q5-k-m-demo2-infer --build-arg REPO=${REPO} --file Dockerfile.infer --load $(pwd) 
 ```
 
-Run the inference image.
+And, you can run the built image with `docker run`:
 
 ```shell
 $ docker run --rm --interactive --tty ${REPO}/qwen2:0.5b-instruct-q5-k-m-demo2-infer
@@ -435,9 +437,8 @@ The `CONVERT` instruction allows you to convert safetensors model files to a GGU
 ```dockerfile
 # syntax=gpustack/gguf-packer:latest
 
-ADD     https://huggingface.co/Qwen/Qwen2-0.5B-Instruct.git /app/Qwen2-0.5B-Instruct
-
 # convert safetensors model files from current stage
+ADD     https://huggingface.co/Qwen/Qwen2-0.5B-Instruct.git /app/Qwen2-0.5B-Instruct
 CONVERT --type=F16 /app/Qwen2-0.5B-Instruct /app/Qwen2-0.5B-Instruct.F16.gguf
 
 # convert from other stage
@@ -529,38 +530,35 @@ QUANTIZE --from=context --type=Q5_K_M /app/Qwen2-0.5B-Instruct.F16.gguf /app/Qwe
 
 ## Motivation
 
-In Large Language Model (LLM) world, there are three popular
-projects: [GGML](https://github.com/ggerganov/ggml), [LLaMa.cpp](https://github.com/ggerganov/llama.cpp)
-and [Ollama](https://github.com/ollama/ollama). LLaMa.cpp is based on GGML, and Ollama is based on LLaMa.cpp.
+In the realm of Large Language Model (LLM) world, three projects stand
+out: [GGML](https://github.com/ggerganov/ggml), [LLaMA.Cpp](https://github.com/ggerganov/llama.cpp),
+and [Ollama](https://github.com/ollama/ollama). LLaMA.Cpp is built on GGML, and Ollama extends LLaMA.Cpp.
 
-GGML provides another option for engineers who don't like Python (many people fall on issues such as environment
-configuration, regional dependence and installation compilation): a tensor computing library based on C/C++. With the
-model file quantized by GGML, that is, the [GGUF](https://github.com/ggerganov/ggml/blob/master/docs/gguf.md) format
-file mentioned above, GGML can give edge devices the opportunity to run LLM.
+GGML presents an alternative for engineers who prefer avoiding Python due to common issues like environment
+configuration, regional limitations, and installation complexities: a tensor computing library rooted in C/C++. With
+GGML's quantized model file, the [GGUF](https://github.com/ggerganov/ggml/blob/master/docs/gguf.md) format, GGML
+empowers edge devices to run LLMs efficiently.
 
-LLaMa.cpp, based on GGML, it encapsulates various popular LLM architectures. With its famous example,
-the [llama-server](https://github.com/ggerganov/llama.cpp/blob/master/examples/server/README.md), you can easily to own
-an OpenAI GPT like service on your laptop.
+LLaMa.cpp encapsulates various prominent LLM architectures and, with its
+flagship [llama-server](https://github.com/ggerganov/llama.cpp/blob/master/examples/server/README.md), enables users to
+set up
+an OpenAI GPT-like service on their laptops with ease.
 
-To own a Chat LLM service, there are many parameters to be set, and the model file is not easy to be managed.
-Ollama provides a solution to this problem, which uses
-a [Model File](https://github.com/ollama/ollama/blob/main/docs/modelfile.md) to deliver the model file and parameters.
+However, managing a Chat LLM service involves numerous parameters and model file management challenges. Ollama addresses
+this by introducing a [Model File](https://github.com/ollama/ollama/blob/main/docs/modelfile.md) that facilitates the
+distribution of the model file and its parameters, much like a
+Dockerfile.
 
-Ollama Model File is similar to Dockerfile, allows you to build an Ollama model and distribute it. But, the Ollama model
-is not friendly to the CloudNative world. Let's dig into why.
+While the Ollama Model File is a Dockerfile-like tool for building and distributing Ollama models only, it does not
+align well with the Cloud Native ecosystem. Let's explore the reasons why.
 
 ### Docker Image
 
-This is a famous DockerHub registry, [alpine](https://hub.docker.com/_/alpine/tags).
-
-[![](./docs/assets/dockerhub-alpine-latest.jpg)](https://hub.docker.com/layers/library/alpine/latest/images/sha256-eddacbc7e24bf8799a4ed3cdcfa50d4b88a323695ad80f317b6629883b2c2a78?context=explore)
-
-We can use [crane](https://github.com/google/go-containerregistry/blob/main/cmd/crane/README.md) to retrieve its
-manifest.
+Take, for example, the renowned DockerHub registry's [alpine](https://hub.docker.com/_/alpine/tags) image. We can
+retrieve its manifest using [crane](https://github.com/google/go-containerregistry/blob/main/cmd/crane/README.md):
 
 ```shell
 $ crane manifest docker.io/library/alpine:latest | jq .
-
 {
   "manifests": [
     {
@@ -589,17 +587,16 @@ $ crane manifest docker.io/library/alpine:latest | jq .
 }
 ```
 
-We can see that the `mediaType` of `alpine:latest` image manifest
-is `application/vnd.docker.distribution.manifest.list.v2+json`,
-which means it's a manifest list that contains multiple platforms. For [OCI](https://opencontainers.org/) compatibility,
-the `mediaType`
+The `mediaType` of `alpine:latest` image manifest
+is `application/vnd.docker.distribution.manifest.list.v2+json`, indicating a manifest list for multiple platforms.
+For [OCI](https://opencontainers.org/) compatibility,
+the corresponding `mediaType`
 is [`application/vnd.oci.image.index.v1+json`](https://github.com/opencontainers/image-spec/blob/main/media-types.md#applicationvndociimageindexv1json).
 
-Next, we go ahead to dig out the `alpine:latest`'s `linux/amd64` platform manifest.
+Delving deeper into the `linux/amd64` platform manifest for `alpine:latest`:
 
 ```shell
 $ crane manifest docker.io/library/alpine@sha256:eddacbc7e24bf8799a4ed3cdcfa50d4b88a323695ad80f317b6629883b2c2a78 | jq .
-
 {
   "schemaVersion": 2,
   "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
@@ -618,17 +615,15 @@ $ crane manifest docker.io/library/alpine@sha256:eddacbc7e24bf8799a4ed3cdcfa50d4
 }
 ``` 
 
-We can see that the `mediaType` of `alpine:latest(linux/amd64)` image manifest
-is `application/vnd.docker.distribution.manifest.v2+json`,
-for [OCI](https://opencontainers.org/) compatibility, it
-is [`application/vnd.oci.image.manifest.v1+json`](https://github.com/opencontainers/image-spec/blob/main/media-types.md#applicationvndociimagemanifestv1json).
+Here, the `mediaType` is `application/vnd.docker.distribution.manifest.v2+json`, which translates
+to [`application/vnd.oci.image.manifest.v1+json`](https://github.com/opencontainers/image-spec/blob/main/media-types.md#applicationvndociimagemanifestv1json)
+for [OCI](https://opencontainers.org/) compatibility.
 
-In this manifest, a special field `config` is a reference to the image configuration, which is a JSON object that
-contains the image's configuration.
+The manifest includes a special `config` field, referencing the image configuration as a JSON object detailing the
+image's settings.
 
 ```shell
 $ crane blob docker.io/library/alpine@sha256:324bc02ae1231fd9255658c128086395d3fa0aedd5a41ab6b034fd649d1a9260 | jq .
-
 {
   "architecture": "amd64",
   "config": {
@@ -664,38 +659,23 @@ $ crane blob docker.io/library/alpine@sha256:324bc02ae1231fd9255658c128086395d3f
 }
 ```
 
-> Note: you can also
-> use `crane config docker.io/library/alpine@sha256:eddacbc7e24bf8799a4ed3cdcfa50d4b88a323695ad80f317b6629883b2c2a78` to
-> get the above configuration.
-
-The configuration represents the detail of this image, including
-the `architecture`, `os`, `config`, `created`, `history` and so on. There is also a `config` field in this
-configuration, which is a JSON object that contains the running detail of the image.
-
 ### OCI Distribution
 
-[OCI Distribution Specification](https://github.com/opencontainers/distribution-spec/blob/main/spec.md) is a
-specification for an image registry, which is a server that stores and serves images. Those implementations implemented
-this distribution-spec are called OCI Registries,
-like [Docker Registry](https://docs.docker.com/registry/), [GitHub Container Registry](https://docs.github.com/en/packages/guides/about-github-container-registry), [Harbor](https://goharbor.io/), [Quay](https://www.quay.io/), [Azure Container Registry](https://azure.microsoft.com/en-us/services/container-registry/), [Google Container Registry](https://cloud.google.com/container-registry)
-and so on.
+The [OCI Distribution Specification](https://github.com/opencontainers/distribution-spec/blob/main/spec.md) defines a
+standard for image registries that store and serve images. Examples of OCI Registries
+include [Docker Registry](https://docs.docker.com/registry/), [GitHub Container Registry](https://docs.github.com/en/packages/guides/about-github-container-registry), [Harbor](https://goharbor.io/), [Quay](https://www.quay.io/), [Azure Container Registry](https://azure.microsoft.com/en-us/services/container-registry/), [Google Container Registry](https://cloud.google.com/container-registry).
 
-At begin, we only store the Container Image in the OCI Registry, but now, we can store things that respected
-the [OCI Artifacts Specification](https://github.com/opencontainers/artifacts) in the OCI Registry. Helm chart is a good
-example.
+Initially designed for storing container images, OCI Registries now also
+support [OCI Artifacts]((https://github.com/opencontainers/artifacts)), with Helm charts being a prime example. Helm
+charts, once managed through [Git repositories](https://github.com/rancher/charts)
+or [released independently](https://github.com/prometheus-community/helm-charts/releases), can now
+be [distributed as OCI Artifacts](https://helm.sh/docs/topics/registries/),
+streamlining operations to a single OCI registry management task.
 
-People initially put chart packages in [Git repositories](https://github.com/rancher/charts)
-or [released them in some way](https://github.com/prometheus-community/helm-charts/releases). Later, Helm
-supported [distributing chart packages](https://helm.sh/docs/topics/registries/) in the form of OCI Artifact. This
-changed the operation and maintenance work from managing OCI registry and Git repositories to only managing OCI
-registry.
-
-We can use crane to read a famous Helm chart package in the OCI
-Registry, [Argo CD](https://github.com/argoproj/argo-helm/pkgs/container/argo-helm%2Fargo-cd).
+We can use `crane` to retrieve a Helm chart's manifest and download it as below:
 
 ```shell
 $ crane manifest ghcr.io/argoproj/argo-helm/argo-cd:7.3.11 | jq .
-
 {
   "schemaVersion": 2,
   "config": {
@@ -716,24 +696,7 @@ $ crane manifest ghcr.io/argoproj/argo-helm/argo-cd:7.3.11 | jq .
     }
   ]
 }
-```
 
-Not as the `apline:latest` we saw before, there is no `mediaType` field in the `argo-cd:7.3.11` manifest. Since this
-field is no a REQUIRED property, it's OK. When we try to pull this chart by Docker CLI, it will be failed.
-
-```shell
-$ docker pull ghcr.io/argoproj/argo-helm/argo-cd:7.3.11
-7.3.11: Pulling from argoproj/argo-helm/argo-cd
-unsupported media type application/vnd.cncf.helm.config.v1+json
-```
-
-Although the Docker CLI can recognize manifest of an OCI Artifact like what `crane` do, it will not solve
-the `config.mediaType` doesn't match `application/vnd.docker.container.image.v1+json`
-or `application/vnd.oci.image.config.v1+json`.
-
-So we can use `crane`, Helm CLI or [ORAS](https://oras.land/docs/commands/oras_pull) to pull the chart package.
-
-```shell
 $ crane pull ghcr.io/argoproj/argo-helm/argo-cd:7.3.11 argo-cd.tar
 
 $ tar xf argo-cd.tar
@@ -751,23 +714,17 @@ drwxrwxrwt  53 root     wheel   1.7K Jul 26 13:26 ..
 
 ### Ollama Model
 
-Now, let's take a look at the Ollama Model. This is the LLaMa3.1:8B model on Ollama Models.
+Examining the Ollama model, specifically the [LLaMa3.1:8B](https://ollama.com/library/llama3.1) model, we initially
+assumed it conformed to the standard OCI Registry.
 
-[![](./docs/assets/ollama-llama3.1-8b.jpg)](https://ollama.com/library/llama3.1)
-
-At first, we thought it was also a standard OCI Registry, so we tried to get its manifest by crane.
+However, attempts to retrieve its manifest with `crane` resulted in a 404 error, indicating non-compliance with OCI
+standards.
 
 ```shell
 $ crane manifest ollama.com/library/llama3.1:8b | jq .
-
 Error: fetching manifest ollama.com/library/llama3.1:8b: GET https://ollama.com/v2/: unexpected status code 404 Not Found: 404 page not found
-```
 
-Em, isn't it a standard OCI Registry?
-
-```shell
 $ curl https://ollama.com/v2/library/llama3.1/manifests/8b | jq .
-
 {
   "schemaVersion": 2,
   "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
@@ -800,48 +757,32 @@ $ curl https://ollama.com/v2/library/llama3.1/manifests/8b | jq .
   ]
 }
 
-```
-
-Well, perhaps we can use `crane` to pull its `config` file.
-
-```shell
 $ crane blob ollama.com/library/llama3.1@sha256:e711233e734332fe5f8a09b2407fb5a083e39ca7e0ba90788026414cd4c059af | jq .
-
 Error: pulling layer ollama.com/library/llama3.1@sha256:e711233e734332fe5f8a09b2407fb5a083e39ca7e0ba90788026414cd4c059af: GET https://ollama.com/v2/: unexpected status code 404 Not Found: 404 page not found
-```
 
-Ops, we cannot. OKay, it's not a standard OCI Registry.
-
-```shell
 $ curl https://ollama.com/v2/library/llama3.1/blobs/sha256:e711233e734332fe5f8a09b2407fb5a083e39ca7e0ba90788026414cd4c059af
-
 <a href="https://dd20bb891979d25aebc8bec07b2b3bbc.r2.cloudflarestorage.com/ollama/docker/registry/v2/blobs/sha256/e7/e711233e734332fe5f8a09b2407fb5a083e39ca7e0ba90788026414cd4c059af/data?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=66040c77ac1b787c3af820529859349a%2F20240725%2Fauto%2Fs3%2Faws4_request&amp;X-Amz-Date=20240725T145758Z&amp;X-Amz-Expires=86400&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=262290faed14709a9c0faf9f8b8d567d3fec84731b2877852d275bc979f0530f">Temporary Redirect</a>.
 
 $ curl -L https://ollama.com/v2/library/llama3.1/blobs/sha256:e711233e734332fe5f8a09b2407fb5a083e39ca7e0ba90788026414cd4c059af
-
 {"model_format":"gguf","model_family":"llama","model_families":["llama"],"model_type":"8.0B","file_type":"Q4_0","architecture":"amd64","os":"linux","rootfs":{"type":"layers","diff_ids":["sha256:87048bcd55216712ef14c11c2c303728463207b165bf18440b9b84b07ec00f87","sha256:11ce4ee3e170f6adebac9a991c22e22ab3f8530e154ee669954c4bc73061c258","sha256:f1cd752815fcf68c3c2e73b2b00b5396c5dffb9eebe49567573f275f9ec85fcd","sha256:56bb8bd477a519ffa694fc449c2413c6f0e1d3b1c88fa7e3c9d88d3ae49d4dcb"]}}
 ```
 
-### Conclusion
-
-With Ollama model, Ollama become the most popular tool to manage the LLM distribution, but it's not a standard OCI
-Artifact. **The distribution mode of Ollama model is not a good practice**.
+**The Ollama model's distribution method is not a good practice.** Why?
 
 Helm chart packages are usually very small, and the network cost of deploying OCI in a nearby network is very low, so
-we don't need to disguise the Helm chart as a Container Image.
+we don't need to disguise the Helm chart as a container image.
 
-However, the model files are huge. For example, the LLaMa3.1:8B model above is 4.3GB. If the same method as the
-Helm chart is used, the network cost will be very high. BTW, **Ollama has not yet compressed the Model(File)s**, which
-further slows down the delivery process.
+However, large model files, such as the 4.3GB LLaMa3.1:8B model, incur significant network costs when distributed
+without compression.
 
-Using `ollama pull` to keep the Ollama model in an OCI Artifact is another **waste of storage and network
-resources**.
+Moreover, we can see many Ollama **pre-download** images in DockerHub, which is inefficient, wasting storage and network
+resources.
 
 [![](./docs/assets/dockerhub-ollama-model-cache.jpg)](https://hub.docker.com/search?q=ollama)
 
-Now, with GGUF Packer, we can build a true OCI Artifact for the LLM distribution. We can
-use [docker --volumes-from](https://docs.docker.com/storage/volumes/#back-up-restore-or-migrate-data-volumes) to mount
-the model to any LLaMACpp-like service container or build on top of the model.
+In conclusion, while Ollama has gained popularity in managing LLM distributions, its approach diverges from best
+practices for OCI Artifacts. GGUF Packer, on the other hand, offers a contemporary solution that adheres to OCI
+standards, reducing both network and storage overhead.
 
 ## License
 
