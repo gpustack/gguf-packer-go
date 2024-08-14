@@ -1,6 +1,7 @@
 # NB(thxCode): The chosen rules of quantified models.
-# 1. use Q5_K_M, Q4_K_M, Q4_K_S, Q4_0, IQ4_XS, Q3_K_M, or Q3_K_S.
-# 2. GGUF file size cannot exceed 50GB.
+# 1. use Q5_K_M, Q4_K_M, Q4_K_S, Q4_0, Q3_K_M, or Q3_K_S.
+# 2. When packing with normal GitHub Action runner, the total size of all GGUF files cannot exceed 45GB,
+#    the largest model is about 70B parameters.
 #
 include:
   #
@@ -26,6 +27,29 @@ include:
     tag: "70b-instruct"
     repository: "mradermacher/Meta-Llama-3.1-70B-Instruct-i1-GGUF"
     file: "Meta-Llama-3.1-70B-Instruct.i1-Q4_K_M.gguf"
+  #
+  # LLaMA3
+  #
+  - name: "llama3"
+    usage: "text-to-text"
+    tag: "8b"
+    repository: "QuantFactory/Meta-Llama-3-8B-GGUF"
+    file: "Meta-Llama-3-8B.Q5_K_M.gguf"
+  - name: "llama3"
+    usage: "text-to-text"
+    tag: "8b-instruct"
+    repository: "QuantFactory/Meta-Llama-3-8B-Instruct-GGUF"
+    file: "Meta-Llama-3-8B-Instruct.Q5_K_M.gguf"
+  - name: "llama3"
+    usage: "text-to-text"
+    tag: "70b"
+    repository: "NousResearch/Meta-Llama-3-70B-GGUF"
+    file: "Meta-Llama-3-70B-Q4_K_M.gguf"
+  - name: "llama3"
+    usage: "text-to-text"
+    tag: "70b-instruct"
+    repository: "QuantFactory/Meta-Llama-3-70B-Instruct-GGUF"
+    file: "Meta-Llama-3-70B-Instruct.Q4_K_M.gguf"
   #
   # Gemma2
   #
@@ -59,6 +83,19 @@ include:
     tag: "27b-instruct"
     repository: "mradermacher/gemma-2-27b-it-i1-GGUF"
     file: "gemma-2-27b-it.i1-Q5_K_M.gguf"
+  #
+  # CodeGemma1.1
+  #
+  - name: "codegemma1.1"
+    usage: "text-to-text"
+    tag: "2b"
+    repository: "mmnga/codegemma-1.1-2b-gguf"
+    file: "codegemma-1.1-2b-Q5_K_M.gguf"
+  - name: "codegemma1.1"
+    usage: "text-to-text"
+    tag: "7b-instruct"
+    repository: "mmnga/codegemma-1.1-7b-it-gguf"
+    file: "codegemma-1.1-7b-it-Q5_K_M.gguf"
   #
   #
   # Qwen2
@@ -95,34 +132,45 @@ include:
     file: "qwen2-7b-instruct-q5_k_m.gguf"
   - name: "qwen2"
     usage: "text-to-text"
-    tag: "math-1.5b"
-    repository: "QuantFactory/Qwen2-Math-1.5B-GGUF"
-    file: "Qwen2-Math-1.5B.Q5_K_M.gguf"
-  - name: "qwen2"
-    usage: "text-to-text"
-    tag: "math-1.5b-instruct"
-    repository: "QuantFactory/Qwen2-Math-1.5B-Instruct-GGUF"
-    file: "Qwen2-Math-1.5B-Instruct.Q5_K_M.gguf"
-  - name: "qwen2"
-    usage: "text-to-text"
-    tag: "math-7b"
-    repository: "QuantFactory/Qwen2-Math-7B-GGUF"
-    file: "Qwen2-Math-7B.Q5_K_M.gguf"
-  - name: "qwen2"
-    usage: "text-to-text"
-    tag: "math-7b-instruct"
-    repository: "QuantFactory/Qwen2-Math-7B-Instruct-GGUF"
-    file: "Qwen2-Math-7B-Instruct.Q5_K_M.gguf"
-  - name: "qwen2"
-    usage: "text-to-text"
     tag: "72b"
     repository: "mradermacher/Qwen2-72B-GGUF"
-    file: "Qwen2-72B.Q4_K_M.gguf"
+    file: "Qwen2-72B.Q4_K_S.gguf"
   - name: "qwen2"
     usage: "text-to-text"
     tag: "72b-instruct"
     repository: "Qwen/Qwen2-72B-Instruct-GGUF"
-    file: "qwen2-72b-instruct-q4_k_m.gguf"
+    file: "qwen2-72b-instruct-q4_0.gguf"
+  #
+  # Qwen2-Math
+  #
+  - name: "qwen2-math"
+    usage: "text-to-text"
+    tag: "1.5b"
+    repository: "QuantFactory/Qwen2-Math-1.5B-GGUF"
+    file: "Qwen2-Math-1.5B.Q5_K_M.gguf"
+  - name: "qwen2-math"
+    usage: "text-to-text"
+    tag: "1.5b-instruct"
+    repository: "QuantFactory/Qwen2-Math-1.5B-Instruct-GGUF"
+    file: "Qwen2-Math-1.5B-Instruct.Q5_K_M.gguf"
+  - name: "qwen2-math"
+    usage: "text-to-text"
+    tag: "7b"
+    repository: "QuantFactory/Qwen2-Math-7B-GGUF"
+    file: "Qwen2-Math-7B.Q5_K_M.gguf"
+  - name: "qwen2-math"
+    usage: "text-to-text"
+    tag: "7b-instruct"
+    repository: "QuantFactory/Qwen2-Math-7B-Instruct-GGUF"
+    file: "Qwen2-Math-7B-Instruct.Q5_K_M.gguf"
+  #
+  # CodeQwen1.5
+  #
+  - name: "codeqwen1.5"
+    usage: "text-to-text"
+    tag: "7b"
+    repository: "Qwen/CodeQwen1.5-7B-Chat-GGUF"
+    file: "codeqwen-1_5-7b-chat-q5_k_m.gguf"
   #
   # Mistral
   #
@@ -156,26 +204,61 @@ include:
     tag: "7b-instruct-v0.3"
     repository: "QuantFactory/Mistral-7B-Instruct-v0.3-GGUF"
     file: "Mistral-7B-Instruct-v0.3.Q5_K_M.gguf"
-  - name: "mistral"
+  #
+  # Mistral-Nemo
+  #
+  - name: "mistral-nemo"
     usage: "text-to-text"
-    tag: "nemo-base-2407" # 12B
+    tag: "base-2407" # 12B
     repository: "QuantFactory/Mistral-Nemo-Base-2407-GGUF"
     file: "Mistral-Nemo-Base-2407.Q5_K_M.gguf"
-  - name: "mistral"
+  - name: "mistral-nemo"
     usage: "text-to-text"
-    tag: "nemo-instruct-2407" # 12B
+    tag: "instruct-2407" # 12B
     repository: "QuantFactory/Mistral-Nemo-Instruct-2407-GGUF"
     file: "Mistral-Nemo-Instruct-2407.Q5_K_M.gguf"
-  - name: "mistral"
+  #
+  # Mixtral
+  #
+  - name: "mixtral"
     usage: "text-to-text"
-    tag: "mixtral-8x7b-v0.1" # 47B
+    tag: "8x7b-v0.1" # 47B
     repository: "TheBloke/Mixtral-8x7B-v0.1-GGUF"
     file: "mixtral-8x7b-v0.1.Q5_K_M.gguf"
-  - name: "mistral"
+  - name: "mixtral"
     usage: "text-to-text"
-    tag: "mixtral-8x7b-instruct-v0.1" # 47B
+    tag: "8x7b-instruct-v0.1" # 47B
     repository: "TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF"
     file: "mixtral-8x7b-instruct-v0.1.Q5_K_M.gguf"
+  #
+  # Mathstral
+  #
+  - name: "mathstral"
+    usage: "text-to-text"
+    tag: "7b-v0.1"
+    repository: "MaziyarPanahi/mathstral-7B-v0.1-GGUF"
+    file: "mathstral-7B-v0.1.Q5_K_M.gguf"
+  #
+  # Codestral
+  #
+  - name: "codestral"
+    usage: "text-to-text"
+    tag: "22b-v0.1"
+    repository: "bartowski/Codestral-22B-v0.1-GGUF"
+    file: "Codestral-22B-v0.1-Q5_K_M.gguf"
+  #
+  # GLM4
+  #
+  - name: "glm4"
+    usage: "text-to-text"
+    tag: "9b"
+    repository: "legraphista/glm-4-9b-chat-GGUF"
+    file: "glm-4-9b-chat.Q5_K.gguf"
+  - name: "glm4"
+    usage: "text-to-text"
+    tag: "9b-1m"
+    repository: "legraphista/glm-4-9b-chat-1m-GGUF"
+    file: "glm-4-9b-chat-1m.Q5_K.gguf"
   #
   # Phi3
   #

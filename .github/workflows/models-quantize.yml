@@ -58,6 +58,9 @@ jobs:
       - name: Maximize Docker Build Space
         uses: gpustack/gguf-packer-go/.github/actions/maximize-docker-build-space@main
         with:
+          root-reserve-mb: 1024
+          temp-reserve-mb: 1024
+          swap-size-mb: 1024
           deep-clean: true
       - name: Setup Buildx
         uses: docker/setup-buildx-action@v3
