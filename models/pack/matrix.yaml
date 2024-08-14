@@ -1,5 +1,6 @@
 # NB(thxCode): The chosen rules of quantified models.
-# 1. use Q5_K_M, Q4_K_M, Q4_K_S, Q4_0, Q3_K_M, or Q3_K_S.
+# 1. In general, recommend to use Q5_K_M, Q4_K_M, Q4_K_S, Q4_0, Q3_K_M, or Q3_K_S,
+#    but for some sufficiently small models, like Embedding, it is recommended to use F16.
 # 2. When packing with normal GitHub Action runner, the total size of all GGUF files cannot exceed 45GB,
 #    the largest model is about 70B parameters.
 #
@@ -350,3 +351,78 @@ include:
     repository: "PsiPi/liuhaotian_llava-v1.5-13b-GGUF"
     file: "llava-v1.5-13b-Q5_K_M.gguf"
     project_file: "mmproj-model-f16.gguf"
+  #
+  # BGE
+  #
+  - name: "bge"
+    usage: "embedding"
+    tag: "small-zh-v1.5"
+    repository: "CompendiumLabs/bge-small-zh-v1.5-gguf"
+    file: "bge-small-zh-v1.5-f16.gguf"
+  - name: "bge"
+    usage: "embedding"
+    tag: "small-en-v1.5"
+    repository: "CompendiumLabs/bge-small-en-v1.5-gguf"
+    file: "bge-small-en-v1.5-f16.gguf"
+  - name: "bge"
+    usage: "embedding"
+    tag: "base-zh-v1.5"
+    repository: "CompendiumLabs/bge-base-zh-v1.5-gguf"
+    file: "bge-base-zh-v1.5-f16.gguf"
+  - name: "bge"
+    usage: "embedding"
+    tag: "base-en-v1.5"
+    repository: "CompendiumLabs/bge-base-en-v1.5-gguf"
+    file: "bge-base-en-v1.5-f16.gguf"
+  - name: "bge"
+    usage: "embedding"
+    tag: "large-zh-v1.5"
+    repository: "CompendiumLabs/bge-large-zh-v1.5-gguf"
+    file: "bge-large-zh-v1.5-f16.gguf"
+  - name: "bge"
+    usage: "embedding"
+    tag: "large-en-v1.5"
+    repository: "CompendiumLabs/bge-large-en-v1.5-gguf"
+    file: "bge-large-en-v1.5-f16.gguf"
+  - name: "bge"
+    usage: "embedding"
+    tag: "m3"
+    repository: "vonjack/bge-m3-gguf"
+    file: "bge-m3-f16.gguf"
+    context_size: 8194
+  #
+  # GTE
+  #
+  - name: "gte"
+    usage: "embedding"
+    tag: "small"
+    repository: "ChristianAzinn/gte-small-gguf"
+    file: "gte-small_fp16.gguf"
+  - name: "gte"
+    usage: "embedding"
+    tag: "base"
+    repository: "ChristianAzinn/gte-base-gguf"
+    file: "gte-base_fp16.gguf"
+  - name: "gte"
+    usage: "embedding"
+    tag: "large"
+    repository: "ChristianAzinn/gte-large-gguf"
+    file: "gte-large_fp16.gguf"
+  - name: "gte"
+    usage: "embedding"
+    tag: "qwen1.5-7b-instruct"
+    repository: "gaianet/gte-Qwen1.5-7B-instruct-GGUF"
+    file: "gte-Qwen1.5-7B-instruct-Q5_K_M.gguf"
+    context_size: 32768
+  - name: "gte"
+    usage: "embedding"
+    tag: "qwen2-1.5b-instruct"
+    repository: "second-state/gte-Qwen2-1.5B-instruct-GGUF"
+    file: "gte-Qwen2-1.5B-instruct-Q5_K_M.gguf"
+    context_size: 131072
+  - name: "gte"
+    usage: "embedding"
+    tag: "qwen2-7b-instruct"
+    repository: "RichardErkhov/Alibaba-NLP_-_gte-Qwen2-7B-instruct-gguf"
+    file: "gte-Qwen2-7B-instruct.Q5_K_M.gguf"
+    context_size: 131072

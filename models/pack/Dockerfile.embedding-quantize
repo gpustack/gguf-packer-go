@@ -1,0 +1,18 @@
+# syntax=gpustack/gguf-packer:latest
+
+ARG        MODEL_VENDOR="CompendiumLabs"
+ARG        MODEL_REPOSITORY="CompendiumLabs/bge-small-en-v1.5-gguf"
+ARG        MODEL_FILE="bge-small-en-v1.5-f32.gguf"
+ARG        MODEL_QUANTIZE_TYPE=Q5_K_M
+ARG        MODEL_CONTEXT_SIZE="512"
+
+FROM       scratch AS quantize
+ADD        https://huggingface.co/${MODEL_REPOSITORY}/resolve/main/${MODEL_FILE} ${MODEL_FILE}
+QUANTIZE   --type=${MODEL_QUANTIZE_TYPE} ${MODEL_FILE} model.${MODEL_QUANTIZE_TYPE}.gguf
+
+FROM       scratch
+LABEL      gguf.model.from="Hugging Face"
+LABEL      gguf.model.usage="embedding"
+LABEL      gguf.model.vendor="${MODEL_VENDOR}"
+COPY       --from=quantize model.${MODEL_QUANTIZE_TYPE}.gguf model.${MODEL_QUANTIZE_TYPE}.gguf
+CMD        ["-m", "${MODEL_FILE}", "-ub", "${MODEL_CONTEXT_SIZE}", "-b", "${MODEL_CONTEXT_SIZE}", "-c", "${MODEL_CONTEXT_SIZE}", "-np", "1"]

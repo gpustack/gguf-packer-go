@@ -106,6 +106,7 @@ jobs:
             MODEL_FILE=${{ matrix.file }}
             ${{ matrix.project_file != ''  && format('MODEL_PROJECTOR_FILE={0}', matrix.project_file ) || ''}}
             ${{ matrix.quantize_type != '' && format('MODEL_QUANTIZE_TYPE={0}',  matrix.quantize_type) || ''}}
+            ${{ matrix.context_size != '' && format('MODEL_CONTEXT_SIZE={0}', matrix.context_size) || '' }}
           tags: |
             "${{ github.event.inputs.model_repository }}/${{ matrix.name }}:${{ matrix.tag }}"
       - name: Review Space Usage
