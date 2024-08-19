@@ -101,6 +101,9 @@ gguf-packer:
 			GOBIN="$(SRCDIR)/.sbin" go install github.com/konoui/lipo@v0.9.1; \
 		  	"$(SRCDIR)/.sbin/lipo" -create -output $(SRCDIR)/.dist/gguf-packer-darwin-universal $(SRCDIR)/.dist/gguf-packer-darwin-amd64 $(SRCDIR)/.dist/gguf-packer-darwin-arm64; \
 		fi;\
+		if [[ $$os == "$(GOOS)" ]] && [[ $$arch == "$(GOARCH)" ]]; then \
+			cp -rf $(SRCDIR)/.dist/gguf-packer-$$os-$$arch$$suffix $(SRCDIR)/.dist/gguf-packer$$suffix; \
+		fi; \
 	done
 
 build: gguf-packer
