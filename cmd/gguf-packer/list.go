@@ -23,20 +23,21 @@ func list(app string) *cobra.Command {
 		Args: cobra.ExactArgs(0),
 		RunE: func(c *cobra.Command, args []string) error {
 			var (
-				hd = []string{
-					"Name",
-					"Tag",
-					"ID",
-					"Arch",
-					"Params",
-					"Bpw",
-					"Type",
-					"Usage",
-					"Created",
-					"Size",
+				hds = [][]any{
+					{
+						"Name",
+						"Tag",
+						"ID",
+						"Arch",
+						"Params",
+						"Bpw",
+						"Type",
+						"Usage",
+						"Created",
+						"Size",
+					},
 				}
-				mg []int
-				bd [][]string
+				bds [][]any
 			)
 
 			msdp := getModelsMetadataStorePath()
@@ -75,7 +76,7 @@ func list(app string) *cobra.Command {
 					created := img.Created
 					size := img.Config.Size
 
-					bd = append(bd, []string{
+					bds = append(bds, []any{
 						sprintf(tenary(strings.HasPrefix(mname, dockerRegPrefix), mname[16:], mname)),
 						sprintf(tenary(strings.HasPrefix(mtag, oldPrefix), "<none>", mtag)),
 						sprintf(tenary(fullID, mid, mid[:12])),
@@ -91,7 +92,7 @@ func list(app string) *cobra.Command {
 				})
 			}
 
-			tfprint(c.OutOrStdout(), false, hd, mg, bd...)
+			tfprint(c.OutOrStdout(), false, hds, bds)
 			return nil
 		},
 	}

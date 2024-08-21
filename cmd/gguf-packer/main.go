@@ -11,7 +11,8 @@ import (
 	"github.com/gpustack/gguf-packer-go/util/anyx"
 	"github.com/gpustack/gguf-packer-go/util/osx"
 	"github.com/gpustack/gguf-packer-go/util/signalx"
-	"github.com/olekukonko/tablewriter"
+	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/jedib0t/go-pretty/v6/text"
 	"github.com/spf13/cobra"
 )
 
@@ -114,33 +115,40 @@ func fprint(w io.Writer, a ...any) {
 	_, _ = fmt.Fprint(w, a...)
 }
 
-func tfprint(w io.Writer, border bool, header []string, mergeCells []int, body ...[]string) {
-	tb := tablewriter.NewWriter(w)
-
-	tb.SetTablePadding("\t")
-	tb.SetHeaderLine(border)
-	tb.SetRowLine(border)
-	tb.SetBorder(border)
-	tb.SetAlignment(tablewriter.ALIGN_CENTER)
-	if !border {
-		tb.SetAlignment(tablewriter.ALIGN_LEFT)
-		tb.SetColumnSeparator("")
+func tfprint(w io.Writer, border bool, headers, bodies [][]any) {
+	tw := table.NewWriter()
+	tw.SetOutputMirror(w)
+	for i := range headers {
+		tw.AppendHeader(headers[i], table.RowConfig{AutoMerge: true, AutoMergeAlign: text.AlignCenter})
 	}
-
-	tb.SetHeaderAlignment(tablewriter.ALIGN_CENTER)
-	tb.SetHeader(header)
-
-	tb.SetAutoWrapText(false)
-	tb.SetColMinWidth(0, 12)
-	tb.SetAutoMergeCells(false)
-	if len(mergeCells) != 0 {
-		tb.SetAutoMergeCellsByColumnIndex(mergeCells)
+	for i := range bodies {
+		tw.AppendRow(bodies[i])
 	}
-	for i := range body {
-		tb.Append(body[i])
+	tw.SetColumnConfigs(func() (r []table.ColumnConfig) {
+		r = make([]table.ColumnConfig, len(headers[0]))
+		for i := range r {
+			r[i].Number = i + 1
+			r[i].AutoMerge = border
+			if len(headers) > 1 && (headers[1][i] == "UMA" || headers[1][i] == "NonUMA") {
+				r[i].AutoMerge = false
+			}
+			r[i].Align = text.AlignCenter
+			if !border {
+				r[i].Align = text.AlignLeft
+			}
+			r[i].AlignHeader = text.AlignCenter
+		}
+		return r
+	}())
+	{
+		tw.Style().Options.DrawBorder = border
+		tw.Style().Options.DrawBorder = border
+		tw.Style().Options.SeparateHeader = border
+		tw.Style().Options.SeparateFooter = border
+		tw.Style().Options.SeparateColumns = border
+		tw.Style().Options.SeparateRows = border
 	}
-
-	tb.Render()
+	tw.Render()
 }
 
 func jprint(w io.Writer, v any) {

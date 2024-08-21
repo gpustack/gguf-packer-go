@@ -26,6 +26,9 @@ func estimate(app string) *cobra.Command {
 		cacheValueType     = "f16"
 		noKVOffload        bool
 		flashAttention     bool
+		splitMode          = "layer"
+		tensorSplit        string
+		mainGPU            uint
 		platformFootprint  = "150,250"
 		noMMap             bool
 		offloadLayers      = -1
@@ -139,6 +142,57 @@ func estimate(app string) *cobra.Command {
 					mopts = append(mopts, ggufparser.WithCacheValueType(toGGMLType(cmd[i])))
 				case "-fa", "--flash-attn":
 					mopts = append(mopts, ggufparser.WithFlashAttention())
+				case "-sm", "--split-mode":
+					if i+1 >= s {
+						continue
+					}
+					i++
+					switch cmd[i] {
+					case "row":
+						mopts = append(mopts, ggufparser.WithSplitMode(ggufparser.LLaMACppSplitModeRow))
+					case "none":
+						mopts = append(mopts, ggufparser.WithSplitMode(ggufparser.LLaMACppSplitModeNone))
+					default:
+						mopts = append(mopts, ggufparser.WithSplitMode(ggufparser.LLaMACppSplitModeLayer))
+					}
+				case "-ts", "--tensor-split":
+					if i+1 >= s {
+						continue
+					}
+					i++
+					var vf []float64
+					{
+						ss := strings.Split(cmd[i], ",")
+						var vs float64
+						vv := make([]float64, len(ss))
+						vf = make([]float64, len(ss))
+						for i, s := range ss {
+							v, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
+							if err != nil {
+								vv = nil
+								vf = nil
+								break
+							}
+							vs += v
+							vv[i] = vs
+						}
+						for i, v := range vv {
+							vf[i] = v / vs
+						}
+					}
+					if len(vf) > 0 {
+						mopts = append(mopts, ggufparser.WithTensorSplitFraction(vf))
+					}
+				case "-mg", "--main-gpu":
+					if i+1 >= s {
+						continue
+					}
+					i++
+					v, err := strconv.ParseUint(cmd[i], 10, 64)
+					if err != nil {
+						continue
+					}
+					mopts = append(mopts, ggufparser.WithMainGPUIndex(int(v)))
 				case "--no-mmap":
 					rawNoMMap = ptr.To(true)
 				case "-ngl", "--gpu-layers":
@@ -191,6 +245,37 @@ func estimate(app string) *cobra.Command {
 			}
 			if flashAttention {
 				mopts = append(mopts, ggufparser.WithFlashAttention())
+			}
+			switch splitMode {
+			case "row":
+				mopts = append(mopts, ggufparser.WithSplitMode(ggufparser.LLaMACppSplitModeRow))
+			case "none":
+				mopts = append(mopts, ggufparser.WithSplitMode(ggufparser.LLaMACppSplitModeNone))
+			default:
+				mopts = append(mopts, ggufparser.WithSplitMode(ggufparser.LLaMACppSplitModeLayer))
+			}
+			if tensorSplit != "" {
+				ss := strings.Split(tensorSplit, ",")
+				var vs float64
+				vv := make([]float64, len(ss))
+				vf := make([]float64, len(ss))
+				for i, s := range ss {
+					v, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
+					if err != nil {
+						return errors.New("--tensor-split has invalid integer")
+					}
+					vs += v
+					vv[i] = vs
+				}
+				for i, v := range vv {
+					vf[i] = v / vs
+				}
+				mopts = append(mopts, ggufparser.WithTensorSplitFraction(vf))
+				if mainGPU < uint(len(vv)) {
+					mopts = append(mopts, ggufparser.WithMainGPUIndex(int(mainGPU)))
+				} else {
+					return errors.New("--main-gpu must be less than item size of --tensor-split")
+				}
 			}
 			if rawNoMMap != nil && !c.Flags().Changed("no-mmap") {
 				noMMap = *rawNoMMap
@@ -274,59 +359,100 @@ func estimate(app string) *cobra.Command {
 			}
 
 			var (
-				hd  []string
-				mg  []int
-				bds [][]string
+				hds [][]any
+				bds [][]any
 			)
 			if e.Architecture != "clip" {
-				hd = []string{
-					"Arch",
-					"Context Size",
-					"Batch Size (L / P)",
-					"Flash Attention",
-					"MMap Support",
-					"Embedding Only",
-					"Offload Layers",
-					"Full Offloaded",
-					"UMA (RAM + VRAM)",
-					"NonUMA RAM",
-					"NonUMA VRAM",
+				hds = [][]any{
+					{
+						"Arch",
+						"Context Size",
+						"Batch Size (L / P)",
+						"Flash Attention",
+						"MMap Load",
+						"Embedding Only",
+						"Offload Layers",
+						"Full Offloaded",
+						"RAM",
+						"RAM",
+					},
+					{
+						"Arch",
+						"Context Size",
+						"Batch Size (L / P)",
+						"Flash Attention",
+						"MMap Load",
+						"Embedding Only",
+						"Offload Layers",
+						"Full Offloaded",
+						"UMA",
+						"NonUMA",
+					},
 				}
-				mg = []int{0, 1, 2, 3, 4, 7}
-				bds = make([][]string, len(es.Memory))
+				for i := range es.Memory[0].VRAMs {
+					hds[0] = append(hds[0], fmt.Sprintf("VRAM %d", i), fmt.Sprintf("VRAM %d", i))
+					hds[1] = append(hds[1], "UMA", "NonUMA")
+				}
+
+				bds = make([][]any, len(es.Memory))
 				for i := range es.Memory {
-					bds[i] = []string{
+					bds[i] = []any{
 						sprintf(es.Architecture),
 						sprintf(es.ContextSize),
 						sprintf("%d / %d", es.LogicalBatchSize, es.PhysicalBatchSize),
-						sprintf(es.FlashAttention),
-						sprintf(!es.NoMMap),
-						sprintf(es.EmbeddingOnly),
+						sprintf(tenary(es.FlashAttention, "Enabled", "Disabled")),
+						sprintf(tenary(!es.NoMMap, "Supported", "Not Supported")),
+						sprintf(tenary(es.EmbeddingOnly, "Yes", "No")),
 						sprintf(tenary(es.Memory[i].FullOffloaded, sprintf("%d (%d + 1)",
 							es.Memory[i].OffloadLayers, es.Memory[i].OffloadLayers-1), es.Memory[i].OffloadLayers)),
 						sprintf(tenary(es.Memory[i].FullOffloaded, "Yes", "No")),
-						sprintf("%s + %s = %s", es.Memory[i].UMA.RAM, es.Memory[i].UMA.VRAM, es.Memory[i].UMA.RAM+es.Memory[i].UMA.VRAM),
-						sprintf(es.Memory[i].NonUMA.RAM),
-						sprintf(es.Memory[i].NonUMA.VRAM),
+						sprintf(es.Memory[i].RAM.UMA),
+						sprintf(es.Memory[i].RAM.NonUMA),
+					}
+					for _, v := range es.Memory[i].VRAMs {
+						bds[i] = append(bds[i],
+							sprintf(v.UMA),
+							sprintf(v.NonUMA))
 					}
 				}
 			} else {
-				hd = []string{
-					"Arch",
-					"Offload Layers",
-					"Full Offloaded",
-					"(V)RAM",
+				hds = [][]any{
+					{
+						"Arch",
+						"Offload Layers",
+						"Full Offloaded",
+						"RAM",
+						"RAM",
+					},
+					{
+						"Arch",
+						"Offload Layers",
+						"Full Offloaded",
+						"UMA",
+						"NonUMA",
+					},
 				}
-				bds = [][]string{
+				for i := range es.Memory[0].VRAMs {
+					hds[0] = append(hds[0], fmt.Sprintf("VRAM %d", i), fmt.Sprintf("VRAM %d", i))
+					hds[1] = append(hds[1], "UMA", "NonUMA")
+				}
+
+				bds = [][]any{
 					{
 						sprintf(es.Architecture),
 						sprintf(es.Memory[0].OffloadLayers),
 						sprintf(tenary(es.Memory[0].FullOffloaded, "Yes", "No")),
-						sprintf(max(es.Memory[0].UMA.RAM, es.Memory[0].UMA.VRAM)),
+						sprintf(es.Memory[0].RAM.UMA),
+						sprintf(es.Memory[0].RAM.NonUMA),
 					},
 				}
+				for _, v := range es.Memory[0].VRAMs {
+					bds[0] = append(bds[0],
+						sprintf(v.UMA),
+						sprintf(v.NonUMA))
+				}
 			}
-			tfprint(c.OutOrStdout(), true, hd, mg, bds...)
+			tfprint(c.OutOrStdout(), true, hds, bds)
 
 			return nil
 		},
@@ -341,6 +467,9 @@ func estimate(app string) *cobra.Command {
 	c.Flags().StringVar(&cacheValueType, "cache-type-v", cacheValueType, "Specify the cache value type.")
 	c.Flags().BoolVar(&noKVOffload, "no-kv-offload", noKVOffload, "Disable the key-value offload.")
 	c.Flags().BoolVar(&flashAttention, "flash-attn", flashAttention, "Enable the flash attention.")
+	c.Flags().StringVar(&splitMode, "split-mode", splitMode, "Specify the split mode, such as layer, row, none.")
+	c.Flags().StringVar(&tensorSplit, "tensor-split", tensorSplit, "Specify the tensor split fraction.")
+	c.Flags().UintVar(&mainGPU, "main-gpu", mainGPU, "Specify the main GPU index.")
 	c.Flags().StringVar(&platformFootprint, "platform-footprint", platformFootprint, "Specify the platform footprint(RAM,VRAM) in MiB.")
 	c.Flags().BoolVar(&noMMap, "no-mmap", noMMap, "Disable the memory mapping.")
 	c.Flags().IntVar(&offloadLayers, "gpu-layers", offloadLayers, "Specify the offload layers.")
