@@ -314,6 +314,14 @@ include:
     repository: "legraphista/glm-4-9b-chat-1m-GGUF"
     file: "glm-4-9b-chat-1m.Q5_K.gguf"
   #
+  # Phi3.5
+  #
+  - name: "phi3.5"
+    usage: "text-to-text"
+    tag: "mini-instruct" # 4B
+    repository: "QuantFactory/Phi-3.5-mini-instruct-GGUF"
+    file: "Phi-3.5-mini-instruct.Q5_K_M.gguf"
+  #
   # Phi3
   #
   - name: "phi3"
@@ -336,6 +344,47 @@ include:
     tag: "medium-128k-instruct" # 14B
     repository: "bartowski/Phi-3-medium-128k-instruct-GGUF"
     file: "Phi-3-medium-128k-instruct-Q5_K_M.gguf"
+  #
+  # Falcon-Mamba
+  #
+  - name: "falcon-mamba"
+    usage: "text-to-text-quantize"
+    quantize_type: "Q5_K_M"
+    tag: "7b"
+    repository: "tiiuae/falcon-mamba-7b-F16-GGUF"
+    file: "falcon-mamba-7B-F16.gguf"
+  - name: "falcon-mamba"
+    usage: "text-to-text-quantize"
+    quantize_type: "Q5_K_M"
+    tag: "7b-instruct"
+    repository: "tiiuae/falcon-mamba-7b-instruct-F16-GGUF"
+    file: "falcon-mamba-7B-instruct-F16.gguf"
+  #
+  # DeepSeek-V2
+  #
+  - name: "deepseek-v2"
+    usage: "text-to-text"
+    tag: "lite" # 16B
+    repository: "mradermacher/DeepSeek-V2-Lite-GGUF"
+    file: "DeepSeek-V2-Lite.Q5_K_M.gguf"
+  - name: "deepseek-v2"
+    usage: "text-to-text"
+    tag: "lite-chat" # 16B
+    repository: "mradermacher/DeepSeek-V2-Lite-Chat-i1-GGUF"
+    file: "DeepSeek-V2-Lite-Chat.i1-Q5_K_M.gguf"
+  #
+  # DeepSeek-Coder-V2
+  #
+  - name: "deepseek-coder-v2"
+    usage: "text-to-text"
+    tag: "lite-base" # 16B
+    repository: "mradermacher/DeepSeek-Coder-V2-Lite-Base-i1-GGUF"
+    file: "DeepSeek-Coder-V2-Lite-Base.i1-Q5_K_M.gguf"
+  - name: "deepseek-coder-v2"
+    usage: "text-to-text"
+    tag: "lite-instruct" # 16B
+    repository: "mradermacher/DeepSeek-Coder-V2-Lite-Instruct-i1-GGUF"
+    file: "DeepSeek-Coder-V2-Lite-Instruct.i1-Q4_K_M.gguf"
   #
   # MiniCPM-V2.6
   #
