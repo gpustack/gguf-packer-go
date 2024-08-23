@@ -29,7 +29,7 @@ GGUF Packer aids in building Large Language Model (LLM) distributions. All you n
 ## Agenda
 
 - [Quick Start](#quick-start)
-    + [Requirements](#requirements)
+    + [Prerequisites](#prerequisites)
     + [Write Dockerfile](#write-dockerfile)
     + [Build Model](#build-model)
     + [Estimate Model Memory Usage](#estimate-model-memory-usage)
