@@ -6,15 +6,15 @@ require (
 	github.com/containerd/platforms v0.2.1
 	github.com/distribution/reference v0.6.0
 	github.com/docker/go-units v0.5.0
-	github.com/gpustack/gguf-parser-go v0.7.4
+	github.com/gpustack/gguf-parser-go v0.7.5
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/moby/buildkit v0.15.2
 	github.com/moby/patternmatcher v0.6.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0
 	github.com/pkg/errors v0.9.1
-	github.com/tonistiigi/go-csvvalue v0.0.0-20240710180619-ddb21b71c0b4
-	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa
+	github.com/tonistiigi/go-csvvalue v0.0.0-20240814133006-030d3b2625d0
+	golang.org/x/exp v0.0.0-20240823005443-9b4947da3948
 	golang.org/x/sync v0.8.0
 	golang.org/x/sys v0.24.0
 )
