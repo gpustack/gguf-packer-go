@@ -337,6 +337,45 @@ func parseCmd(req parseRequest) (*CmdCommand, error) {
 				Value: args[i],
 				Index: i,
 			})
+		case "--lora-scaled":
+			if i+2 >= s {
+				return nil, errors.New("CMD: --lora-scaled argument requires two values")
+			}
+			i++
+			if args[i] != "" {
+				adapters = append(adapters, CmdParameter{
+					Type:  "adapter",
+					Value: args[i],
+					Index: i,
+				})
+			}
+			i++
+		case "--control-vector":
+			if i+1 >= s {
+				return nil, errors.New("CMD: --control-vector argument requires a value")
+			}
+			i++
+			if args[i] == "" {
+				continue
+			}
+			adapters = append(adapters, CmdParameter{
+				Type:  "adapter",
+				Value: args[i],
+				Index: i,
+			})
+		case "--control-vector-scaled":
+			if i+2 >= s {
+				return nil, errors.New("CMD: --control-vector-scaled argument requires two values")
+			}
+			i++
+			if args[i] != "" {
+				adapters = append(adapters, CmdParameter{
+					Type:  "adapter",
+					Value: args[i],
+					Index: i,
+				})
+			}
+			i++
 		}
 	}
 

@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 	"sync"
@@ -29,6 +30,7 @@ func estimate(app string) *cobra.Command {
 		splitMode          = "layer"
 		tensorSplit        string
 		mainGPU            uint
+		rpcServers         string
 		platformFootprint  = "150,250"
 		noMMap             bool
 		offloadLayers      = -1
@@ -142,59 +144,6 @@ func estimate(app string) *cobra.Command {
 					mopts = append(mopts, ggufparser.WithCacheValueType(toGGMLType(cmd[i])))
 				case "-fa", "--flash-attn":
 					mopts = append(mopts, ggufparser.WithFlashAttention())
-				case "-sm", "--split-mode":
-					if i+1 >= s {
-						continue
-					}
-					i++
-					switch cmd[i] {
-					case "row":
-						mopts = append(mopts, ggufparser.WithSplitMode(ggufparser.LLaMACppSplitModeRow))
-					case "none":
-						mopts = append(mopts, ggufparser.WithSplitMode(ggufparser.LLaMACppSplitModeNone))
-					default:
-						mopts = append(mopts, ggufparser.WithSplitMode(ggufparser.LLaMACppSplitModeLayer))
-					}
-				case "-ts", "--tensor-split":
-					if i+1 >= s {
-						continue
-					}
-					i++
-					var vf []float64
-					{
-						ss := strings.Split(cmd[i], ",")
-						var vs float64
-						vv := make([]float64, len(ss))
-						vf = make([]float64, len(ss))
-						for i, s := range ss {
-							v, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
-							if err != nil {
-								vv = nil
-								vf = nil
-								break
-							}
-							vs += v
-							vv[i] = vs
-						}
-						for i, v := range vv {
-							vf[i] = v / vs
-						}
-					}
-					if len(vf) > 0 {
-						mopts = append(mopts, ggufparser.WithTensorSplitFraction(vf))
-					}
-				case "-mg", "--main-gpu":
-					if i+1 >= s {
-						continue
-					}
-					i++
-					v, err := strconv.ParseUint(cmd[i], 10, 64)
-					if err != nil {
-						continue
-					}
-					mopts = append(mopts, ggufparser.WithMainGPUIndex(int(v)))
-				case "--no-mmap":
-					rawNoMMap = ptr.To(true)
 				case "-ngl", "--gpu-layers":
 					if i+1 >= s {
 						continue
@@ -255,11 +204,11 @@ func estimate(app string) *cobra.Command {
 				mopts = append(mopts, ggufparser.WithSplitMode(ggufparser.LLaMACppSplitModeLayer))
 			}
 			if tensorSplit != "" {
-				ss := strings.Split(tensorSplit, ",")
+				tss := strings.Split(tensorSplit, ",")
 				var vs float64
-				vv := make([]float64, len(ss))
-				vf := make([]float64, len(ss))
-				for i, s := range ss {
+				vv := make([]float64, len(tss))
+				vf := make([]float64, len(tss))
+				for i, s := range tss {
 					v, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
 					if err != nil {
 						return errors.New("--tensor-split has invalid integer")
@@ -276,6 +225,21 @@ func estimate(app string) *cobra.Command {
 				} else {
 					return errors.New("--main-gpu must be less than item size of --tensor-split")
 				}
+				if rpcServers != "" {
+					rss := strings.Split(rpcServers, ",")
+					if len(rss) > len(tss) {
+						return errors.New("--rpc has more items than --tensor-split")
+					}
+					rpc := make([]string, len(rss))
+					for i, s := range rss {
+						s = strings.TrimSpace(s)
+						if _, _, err := net.SplitHostPort(s); err != nil {
+							return errors.New("--rpc has invalid host:port")
+						}
+						rpc[i] = s
+					}
+					mopts = append(mopts, ggufparser.WithRPCServers(rpc))
+				}
 			}
 			if rawNoMMap != nil && !c.Flags().Changed("no-mmap") {
 				noMMap = *rawNoMMap
@@ -288,11 +252,6 @@ func estimate(app string) *cobra.Command {
 			}
 
 			// Estimate.
-			if p := cf.Config.Projector; p != nil {
-				popts := mopts[:len(mopts):len(mopts)]
-				pe := p.EstimateLLaMACppUsage(popts...)
-				mopts = append(mopts, ggufparser.WithMultimodalProjector(&pe))
-			}
 			if d := cf.Config.Drafter; d != nil {
 				dopts := mopts[:len(mopts):len(mopts)]
 				if offloadLayersDraft >= 0 {
@@ -301,7 +260,20 @@ func estimate(app string) *cobra.Command {
 				de := d.EstimateLLaMACppUsage(dopts...)
 				mopts = append(mopts, ggufparser.WithDrafter(&de))
 			}
-			// TODO adapter.
+			if p := cf.Config.Projector; p != nil {
+				popts := mopts[:len(mopts):len(mopts)]
+				pe := p.EstimateLLaMACppUsage(popts...)
+				mopts = append(mopts, ggufparser.WithProjector(&pe))
+			}
+			if len(cf.Config.Adapters) > 0 {
+				adps := make([]ggufparser.LLaMACppUsageEstimate, len(cf.Config.Adapters))
+				aopts := mopts[:len(mopts):len(mopts)]
+				for i, adpgf := range cf.Config.Adapters {
+					ae := adpgf.EstimateLLaMACppUsage(aopts...)
+					adps[i] = ae
+				}
+				mopts = append(mopts, ggufparser.WithAdapters(adps))
+			}
 			if offloadLayers >= 0 {
 				mopts = append(mopts, ggufparser.WithOffloadLayers(uint64(offloadLayers)))
 			}
@@ -362,7 +334,7 @@ func estimate(app string) *cobra.Command {
 				hds [][]any
 				bds [][]any
 			)
-			if e.Architecture != "clip" {
+			{
 				hds = [][]any{
 					{
 						"Arch",
@@ -402,8 +374,8 @@ func estimate(app string) *cobra.Command {
 						sprintf(es.Architecture),
 						sprintf(es.ContextSize),
 						sprintf("%d / %d", es.LogicalBatchSize, es.PhysicalBatchSize),
-						sprintf(tenary(es.FlashAttention, "Enabled", "Disabled")),
-						sprintf(tenary(!es.NoMMap, "Supported", "Not Supported")),
+						sprintf(tenary(flashAttention, tenary(es.FlashAttention, "Enabled", "Not Supported"), "Disabled")),
+						sprintf(tenary(mmap, tenary(!es.NoMMap, "Enabled", "Not Supported"), "Disabled")),
 						sprintf(tenary(es.EmbeddingOnly, "Yes", "No")),
 						sprintf(tenary(es.Distributable, "Supported", "Not Supported")),
 						sprintf(tenary(es.Memory[i].FullOffloaded, sprintf("%d (%d + 1)",
@@ -417,42 +389,6 @@ func estimate(app string) *cobra.Command {
 							sprintf(v.UMA),
 							sprintf(v.NonUMA))
 					}
-				}
-			} else {
-				hds = [][]any{
-					{
-						"Arch",
-						"Offload Layers",
-						"Full Offloaded",
-						"RAM",
-						"RAM",
-					},
-					{
-						"Arch",
-						"Offload Layers",
-						"Full Offloaded",
-						"UMA",
-						"NonUMA",
-					},
-				}
-				for i := range es.Memory[0].VRAMs {
-					hds[0] = append(hds[0], fmt.Sprintf("VRAM %d", i), fmt.Sprintf("VRAM %d", i))
-					hds[1] = append(hds[1], "UMA", "NonUMA")
-				}
-
-				bds = [][]any{
-					{
-						sprintf(es.Architecture),
-						sprintf(es.Memory[0].OffloadLayers),
-						sprintf(tenary(es.Memory[0].FullOffloaded, "Yes", "No")),
-						sprintf(es.Memory[0].RAM.UMA),
-						sprintf(es.Memory[0].RAM.NonUMA),
-					},
-				}
-				for _, v := range es.Memory[0].VRAMs {
-					bds[0] = append(bds[0],
-						sprintf(v.UMA),
-						sprintf(v.NonUMA))
 				}
 			}
 			tfprint(c.OutOrStdout(), true, hds, bds)
@@ -473,6 +409,7 @@ func estimate(app string) *cobra.Command {
 	c.Flags().StringVar(&splitMode, "split-mode", splitMode, "Specify the split mode, such as layer, row, none.")
 	c.Flags().StringVar(&tensorSplit, "tensor-split", tensorSplit, "Specify the tensor split fraction.")
 	c.Flags().UintVar(&mainGPU, "main-gpu", mainGPU, "Specify the main GPU index.")
+	c.Flags().StringVar(&rpcServers, "rpc", rpcServers, "Specify the RPC servers.")
 	c.Flags().StringVar(&platformFootprint, "platform-footprint", platformFootprint, "Specify the platform footprint(RAM,VRAM) in MiB.")
 	c.Flags().BoolVar(&noMMap, "no-mmap", noMMap, "Disable the memory mapping.")
 	c.Flags().IntVar(&offloadLayers, "gpu-layers", offloadLayers, "Specify the offload layers.")

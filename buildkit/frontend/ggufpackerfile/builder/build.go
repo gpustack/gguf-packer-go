@@ -180,7 +180,7 @@ func Build(ctx context.Context, c client.Client) (_ *client.Result, err error) {
 			if err = json.Unmarshal(bs, &gf); err != nil {
 				return nil, nil, nil, errors.Wrapf(err, "failed to unmarshal parsing result")
 			}
-			m := gf.Model()
+			m := gf.Metadata()
 			mgf := specs.GGUFFile{
 				GGUFFile:          gf,
 				Architecture:      m.Architecture,

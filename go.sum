@@ -101,8 +101,8 @@ github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510/go.mod h1:pupxD2MaaD3
 github.com/google/uuid v1.1.2/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/gpustack/gguf-parser-go v0.7.5 h1:oBK1j5kSndRyP4o0CDCA57oeW/Rfae8/j8dtzQEtojw=
-github.com/gpustack/gguf-parser-go v0.7.5/go.mod h1:FWtM5FF/6JKF3tIuW4gbuq1yk7N3v3CIfWypnxo1KpY=
+github.com/gpustack/gguf-parser-go v0.8.1 h1:pomZCUUxrSkuc6tg/q1ip4P/KixVt48J6nbBu2SW8Z0=
+github.com/gpustack/gguf-parser-go v0.8.1/go.mod h1:FWtM5FF/6JKF3tIuW4gbuq1yk7N3v3CIfWypnxo1KpY=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.21.0 h1:CWyXh/jylQWp2dtiV33mY4iSSp6yf4lmn+c7/tN+ObI=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.21.0/go.mod h1:nCLIt0w3Ept2NwF8ThLmrppXsfT07oC8k0XNDxd8sVU=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
