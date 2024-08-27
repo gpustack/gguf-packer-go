@@ -1479,12 +1479,6 @@ func dispatchConvert(d *dispatchState, c *instructions.ConvertCommand, opt *disp
 	if !slices.Contains(types, c.Type) {
 		return errors.Errorf("invalid type %q", c.Type)
 	}
-	if c.Class == "lora" {
-		commitMessage.WriteString(" --base=" + c.BaseModel)
-		if c.BaseModel == "" {
-			return errors.New("base model must be specified for class lora")
-		}
-	}
 
 	platform := opt.targetPlatform
 	if d.platform != nil {
@@ -1495,6 +1489,18 @@ func dispatchConvert(d *dispatchState, c *instructions.ConvertCommand, opt *disp
 	name := uppercaseCmd(processCmdEnv(opt.shlex, c.String(), env))
 	pgName := prefixCommand(d, name, d.prefixPlatform, &platform, env)
 
+	var base string
+	if c.Class == "lora" {
+		base = c.BaseModel
+		if base == "" {
+			return errors.New("base model must be specified for class lora")
+		}
+		base, err = system.NormalizePath("/", base, d.platform.OS, false)
+		if err != nil {
+			return errors.Wrap(err, "removing drive letter")
+		}
+		commitMessage.WriteString(" --base=" + base)
+	}
 	src := c.SourcePaths[0]
 	{
 		commitMessage.WriteString(" " + src)
@@ -1521,10 +1527,9 @@ func dispatchConvert(d *dispatchState, c *instructions.ConvertCommand, opt *disp
 		"--outfile",
 		path.Join("/run/dest", dest),
 	}
-	switch c.Class {
-	case "lora":
+	if base != "" {
 		runArgs[0] = "/app/convert_lora_to_gguf.py"
-		runArgs = append(runArgs, "--base", c.BaseModel)
+		runArgs = append(runArgs, "--base", path.Join("/run/extra", base))
 	}
 	st := d.state
 	if len(sources) > 1 {
@@ -1536,6 +1541,9 @@ func dispatchConvert(d *dispatchState, c *instructions.ConvertCommand, opt *disp
 		llb.Args(runArgs),
 		llb.AddMount("/run/src", st, llb.Readonly),
 		llb.AddMount("/tmp", llb.Scratch(), llb.Tmpfs()),
+	}
+	if base != "" {
+		runOpt = append(runOpt, llb.AddMount("/run/extra", d.state, llb.Readonly))
 	}
 	if d.ignoreCache {
 		runOpt = append(runOpt, llb.IgnoreCache)

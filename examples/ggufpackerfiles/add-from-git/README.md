@@ -40,7 +40,7 @@ $ cd gguf-packer-go/examples/ggufpackerfiles/add-from-git
 3. Start buildkitd.
 
 ```shell
-$ docker buildx create --name "git-lfs" --driver "docker-container" --driver-opt "image=gpustack/buildkit:v0.15.1-git-lfs" --buildkitd-flags "--allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host" --bootstrap 
+$ docker buildx create --name "git-lfs" --driver "docker-container" --driver-opt "image=thxcode/buildkit:v0.15.1-git-lfs" --buildkitd-flags "--allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host" --bootstrap 
 ```   
 
 4. Build this example.
