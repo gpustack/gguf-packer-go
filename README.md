@@ -41,6 +41,15 @@ GGUF Packer aids in building Large Language Model (LLM) distributions. All you n
 - [Overview](#overview)
     + [Format](#format)
     + [Instructions](#instructions)
+        * [ADD](#add)
+        * [ARG](#arg)
+        * [CAT](#cat)
+        * [CMD](#cmd)
+        * [COPY](#copy)
+        * [CONVERT](#convert)
+        * [FROM](#from)
+        * [LABEL](#label)
+        * [QUANTIZE](#quantize)
 - [Motivation](#motivation)
     + [Docker Image](#docker-image)
     + [OCI Distribution](#oci-distribution)
@@ -447,6 +456,11 @@ CONVERT --from=other-stage --type=F16 /app/Qwen2-0.5B-Instruct /app/Qwen2-0.5B-I
 
 # convert from build context
 CONVERT --from=context --type=F16 /app/Qwen2-0.5B-Instruct /app/Qwen2-0.5B-Instruct.F16.gguf
+
+# convert a PEFT LoRA adapter to GGUF file
+ADD        https://huggingface.co/inflaton/Qwen2-1.5B-MAC-lora.git Qwen2-1.5B-MAC-lora
+ADD        https://huggingface.co/Qwen/Qwen2-1.5B.git Qwen2-1.5B
+CONVERT    --type=F16 --class=lora --base=Qwen2-1.5B Qwen2-1.5B-MAC-lora Qwen2-1.5B-MAC-lora.F16.gguf
 ```
 
 ##### Available Options
