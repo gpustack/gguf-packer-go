@@ -127,13 +127,13 @@ Once the building process is complete, we can utilize `gguf-packer` to estimate 
 
 ```shell
 $ gguf-packer estimate ${REPO}/qwen2:0.5b-instruct-q5-k-m-demo
-+-------+--------------+--------------------+-----------------+-----------+----------------+----------------+----------------+------------------------+----------------------+
-|  ARCH | CONTEXT SIZE | BATCH SIZE (L / P) | FLASH ATTENTION | MMAP LOAD | EMBEDDING ONLY | OFFLOAD LAYERS | FULL OFFLOADED |           RAM          |        VRAM 0        |
-|       |              |                    |                 |           |                |                |                +-----------+------------+-----------+----------+
-|       |              |                    |                 |           |                |                |                |    UMA    |   NONUMA   |    UMA    |  NONUMA  |
-+-------+--------------+--------------------+-----------------+-----------+----------------+----------------+----------------+-----------+------------+-----------+----------+
-| qwen2 |     8192     |     2048 / 512     |     Disabled    | Supported |       No       |   25 (24 + 1)  |       Yes      | 90.94 MiB | 240.94 MiB | 96.58 MiB | 1.03 GiB |
-+-------+--------------+--------------------+-----------------+-----------+----------------+----------------+----------------+-----------+------------+-----------+----------+
++-------+--------------+--------------------+-----------------+-----------+----------------+---------------+----------------+----------------+------------------------+----------------------+
+|  ARCH | CONTEXT SIZE | BATCH SIZE (L / P) | FLASH ATTENTION | MMAP LOAD | EMBEDDING ONLY | DISTRIBUTABLE | OFFLOAD LAYERS | FULL OFFLOADED |           RAM          |        VRAM 0        |
+|       |              |                    |                 |           |                |               |                |                +-----------+------------+-----------+----------+
+|       |              |                    |                 |           |                |               |                |                |    UMA    |   NONUMA   |    UMA    |  NONUMA  |
++-------+--------------+--------------------+-----------------+-----------+----------------+---------------+----------------+----------------+-----------+------------+-----------+----------+
+| qwen2 |     8192     |     2048 / 512     |     Disabled    |  Enabled  |       No       | Not Supported |   25 (24 + 1)  |       Yes      | 90.94 MiB | 240.94 MiB | 96.58 MiB | 1.03 GiB |
++-------+--------------+--------------------+-----------------+-----------+----------------+---------------+----------------+----------------+-----------+------------+-----------+----------+
 ```
 
 ### Build Model with other Quantize Type
@@ -328,9 +328,8 @@ see [Usage](#usage).
 
 #### ADD
 
-The `ADD` instruction follows the definition
-of [Dockerfile](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#add),
-which be able to add a quantified model file to the image or copy an original model from Hugging Face.
+The `ADD` instruction copies new files or directories from `<src>` and adds them to the filesystem of the image at the
+path `<dest>`. Files and directories can be copied from the build context, a remote URL, or a Git repository.
 
 ```dockerfile
 # syntax=gpustack/gguf-packer:latest
@@ -344,20 +343,20 @@ ADD https://huggingface.co/Qwen/Qwen2-0.5B-Instruct.git /app/Qwen2-0.5B-Instruct
 
 ##### Available Options
 
-- `ADD [--keep-git-dir=<boolean>] <src> ... <dir>`
-- `ADD [--checksum=<hash>] <src> ... <dir>`
-- `ADD [--chown=<user>:<group>] [--chmod=<perms> ...] <src> ... <dest>`
-- `ADD [--link[=<boolean>]] <src> ... <dest>`
-- `ADD [--exclude=<path> ...] <src> ... <dest>`
-
-The available options are the same as the Dockerfile's `ADD` instruction, please retrieve the information from the
-Dockerfile's guide.
+- `ADD [--keep-git-dir=<boolean>] <src> ... <dir>`, preserve the `.git` directory when adding from a Git repository.
+- `ADD [--checksum=<hash>] <src> ... <dir>`, only support HTTP/HTTPS URLs, the checksum is formatted
+  as <algorithm>:<hash>. The supported algorithms are sha256, sha384, and sha512.
+- `ADD [--chown=<user>:<group>] [--chmod=<perms> ...] <src> ... <dest>`,
+  referring [Dockerfile/COPY --chown --chmod](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#copy---chown---chmod).
+- `ADD [--link[=<boolean>]] <src> ... <dest>`,
+  referring [Dockerfile/COPY --link](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#copy---link).
+- `ADD [--exclude=<path> ...] <src> ... <dest>`,
+  referring [Dockerfile/COPY --exclude](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#copy---exclude).
 
 #### ARG
 
-The `ARG` instruction follows the definition
-of [Dockerfile](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#arg),
-which be able to use build-time variables.
+The `ARG` instruction defines a variable that users can pass at build-time to the builder with the `docker build`
+command using the `--build-arg <varname>=<value>` flag.
 
 ```dockerfile
 # syntax=gpustack/gguf-packer:latest
@@ -369,7 +368,7 @@ ARG QUANTIZE_TYPE=Q5_K_M
 ADD https://huggingface.co/${REPO}/${MODEL}-GGUF/resolve/main/${MODEL}.${QUANTIZE_TYPE}.gguf /app/${MODEL}.${QUANTIZE_TYPE}.gguf
 ```
 
-GGUFPackerfile supports global `ARG`s, which means you can use the same `ARG` in multiple stages.
+GGUF Packer supports global `ARG`s, which means you can use the same `ARG` in multiple stages.
 
 #### CAT
 
@@ -394,9 +393,8 @@ CMD ["-c", "8192", "--system-prompt-file", "/app/system-prompt.txt"]
 
 #### CMD
 
-The `CMD` instruction follows the definition
-of [Dockerfile](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#cmd), but only
-support exec forms.
+The `CMD` instruction sets the command to be executed. There can only be one `CMD` instruction in a Dockerfile. If you
+list more than one `CMD`, only the last one takes effect.
 
 ```dockerfile
 # syntax=gpustack/gguf-packer:latest
@@ -408,8 +406,8 @@ CMD ["-m", "/app/Qwen2-0.5B-Instruct.Q5_K_M.gguf", "-c", "8192", "--system-promp
 
 #### COPY
 
-The `COPY` instruction follows the definition
-of [Dockerfile](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#copy).
+The `COPY` instruction copies new files or directories from `<src>` and adds them to the filesystem of the image at the
+path `<dest>`. Files and directories can be copied from the build context, build stage, named context, or an image.
 
 ```dockerfile
 # syntax=gpustack/gguf-packer:latest
@@ -423,14 +421,15 @@ COPY --from=original /app/Qwen2-0.5B-Instruct.Q5_K_M.gguf /app/
 
 ##### Available Options
 
-- `COPY [--from=<image|stage|context>] <src> ... <dest>`
-- `COPY [--parents[=<boolean>]] <src> ... <dest>`
-- `COPY [--chown=<user>:<group>] [--chmod=<perms> ...] <src> ... <dest>`
-- `COPY [--link[=<boolean>]] <src> ... <dest>`
-- `COPY [--exclude=<path> ...] <src> ... <dest>`
-
-The available options are the same as the Dockerfile's `COPY` instruction, please retrieve the information from the
-Dockerfile's guide.
+- `COPY [--from=<image|stage|context>] <src> ... <dest>`, by default, the `COPY` instruction copies files from the build
+  context. The `COPY --from` flag lets you copy files from an image, a build stage, or a named context instead.
+- `COPY [--parents[=<boolean>]] <src> ... <dest>`, preserves parent directories for `<src>` entries.
+- `COPY [--chown=<user>:<group>] [--chmod=<perms> ...] <src> ... <dest>`,
+  referring [Dockerfile/COPY --chown --chmod](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#copy---chown---chmod).
+- `COPY [--link[=<boolean>]] <src> ... <dest>`,
+  referring [Dockerfile/COPY --link](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#copy---link).
+- `COPY [--exclude=<path> ...] <src> ... <dest>`,
+  referring [Dockerfile/COPY --exclude](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#copy---exclude).
 
 #### CONVERT
 
@@ -452,29 +451,38 @@ CONVERT --from=context --type=F16 /app/Qwen2-0.5B-Instruct /app/Qwen2-0.5B-Instr
 
 ##### Available Options
 
-- `CONVERT [--from=<image|stage|context>] <src> ... <dest>`, convert safetensors model files to GGUF model file from
-  image, other stage or context, where places `<src>`.
-- `CONVERT [--type=<type>] <src> <dest>`,
-  see [llama.cpp/convert_hf_to_gguf.py](https://github.com/ggerganov/llama.cpp/blob/01245f5b1629075543bc4478418c7d72a0b4b3c7/convert_hf_to_gguf.py#L3553-L3556).
+- `CONVERT [--from=<image|stage|context>] <src> <dest>`, by default, the `CONVERT` instruction converts file from the
+  build context. The `CONVERT --from` flag lets you convert file from an image, a build stage, or a named context
+  instead.
+- `CONVERT [--class=<model|lora>] <src> <dest>`, specify the class for the model, default is `model`.
+    + `CONVERT --class=lora --base=<path> <src> <dest>`, convert a PEFT LoRA adapter to GGUF file, must provide the
+      `base` model.
+- `CONVERT [--type=<type>] <src> <dest>`, specify the output type for `<dest>`, select from `F32`, `F16`, `BF16` and
+  `Q8_0`, default is `F16`.
 
 #### FROM
 
-The `FROM` instruction follows the definition
-of [Dockerfile](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#from).
+The `FROM` instruction initializes a new build stage and sets
+the [base image](https://docs.docker.com/reference/glossary/#base-image) for subsequent instructions. As such, a valid
+Dockerfile must start with a `FROM` instruction. The image can be any valid image.
+
+`FROM` can appear multiple times within a single Dockerfile to create multiple images or use one build stage as a
+dependency for another. Simply make a note of the last image ID output by the commit before each new `FROM` instruction.
+Each `FROM` instruction clears any state created by previous instructions.
 
 ```dockerfile
 # syntax=gpustack/gguf-packer:latest
 
 FROM scratch 
 
-# reference another model
+# reference another image
 FROM thxcode/qwen2:0.5b-instruct-q5-k-m
 ```
 
 #### LABEL
 
-The `LABEL` instruction follows the definition
-of [Dockerfile](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md#label).
+The `LABEL` instruction adds metadata to an image. A `LABEL` is a key-value pair. To include spaces within a `LABEL`
+value, use quotes and backslashes as you would in command-line parsing.
 
 ```dockerfile
 # syntax=gpustack/gguf-packer:latest
@@ -525,10 +533,25 @@ QUANTIZE --from=context --type=Q5_K_M /app/Qwen2-0.5B-Instruct.F16.gguf /app/Qwe
 
 ##### Available Options
 
-- `QUANTIZE [--from=<image|stage|context>] <src> ... <dest>`, quantize a GGUF file from current stage, other stage or
-  context, where places `<src>`.
-- `QUANTIZE [--type=<type>] [--imatrix=<path>] [--include-weights=...] [--exclude-weights=...] [--leave-output-tensor] [--pure] [--output-tensor-type=<GGML Type>] [--token-embedding-type=<GGML Type>] <src> ... <dest>`,
-  see [llama.cpp/quantize.cpp](https://github.com/ggerganov/llama.cpp/blob/15fa07a5c564d3ed7e7eb64b73272cedb27e73ec/examples/quantize/quantize.cpp#L98-L121).
+- `QUANTIZE [--from=<image|stage|context>] <src> <dest>`, by default, the `QUANTIZE` instruction quantizes file from the
+  build context. The `QUANTIZE --from` flag lets you quantize file from an image, a build stage, or a named context
+  instead.
+- `QUANTIZE [--type=<type>] <src> <dest>`, specify the output type for `<dest>`,
+  referring [llama.cpp/quantize](https://github.com/ggerganov/llama.cpp/blob/c887d8b01726b11ea03dbcaa9d44fa74422d0076/examples/quantize/quantize.cpp#L19-L51),
+  upper case, default is `Q5_K_M`.
+- `QUANTIZE [--pure] <src> <dest>`, indicate to disable k-quant mixtures and quantize all tensors to the same type.
+- `QUANTIZE [--imatrix=<path>] <src> <dest>`, introduce a file as importance matrix for quant optimizations.
+    + `QUANTIZE --imatrix=<path> [--include-weights=<tensor_name,...>] <src> <dest>`, specify to use the importance
+      matrix for this/these tensors.
+    + `QUANTIZE --imatrix=<path> [--exclude-weights=<tensor_name,...>] <src> <dest>`, specify to use the importance
+      matrix, but exclude for this/these tensors.
+- `QUANTIZE [--leave-output-tensor] <src> <dest>`, indicate to not quantize the `output.weight` tensor.
+- `QUANTIZE [--output-tensor-type=<type>] <src> <dest>`, indicate the output tensor type,
+  referring [llama.cpp/ggml](https://github.com/ggerganov/llama.cpp/blob/c887d8b01726b11ea03dbcaa9d44fa74422d0076/ggml/src/ggml.c#L579-L974),
+  upper case.
+- `QUANTIZE [--token-embedding-type=<type>] <src> <dest>`, indicate the token embedding type,
+  referring [llama.cpp/ggml](https://github.com/ggerganov/llama.cpp/blob/c887d8b01726b11ea03dbcaa9d44fa74422d0076/ggml/src/ggml.c#L579-L974),
+  upper case.
 
 ## Motivation
 
@@ -593,7 +616,8 @@ The `mediaType` of `alpine:latest` image manifest
 is `application/vnd.docker.distribution.manifest.list.v2+json`, indicating a manifest list for multiple platforms.
 For [OCI](https://opencontainers.org/) compatibility,
 the corresponding `mediaType`
-is [`application/vnd.oci.image.index.v1+json`](https://github.com/opencontainers/image-spec/blob/main/media-types.md#applicationvndociimageindexv1json).
+is [
+`application/vnd.oci.image.index.v1+json`](https://github.com/opencontainers/image-spec/blob/main/media-types.md#applicationvndociimageindexv1json).
 
 Delving deeper into the `linux/amd64` platform manifest for `alpine:latest`:
 
@@ -618,7 +642,8 @@ $ crane manifest docker.io/library/alpine@sha256:eddacbc7e24bf8799a4ed3cdcfa50d4
 ``` 
 
 Here, the `mediaType` is `application/vnd.docker.distribution.manifest.v2+json`, which translates
-to [`application/vnd.oci.image.manifest.v1+json`](https://github.com/opencontainers/image-spec/blob/main/media-types.md#applicationvndociimagemanifestv1json)
+to [
+`application/vnd.oci.image.manifest.v1+json`](https://github.com/opencontainers/image-spec/blob/main/media-types.md#applicationvndociimagemanifestv1json)
 for [OCI](https://opencontainers.org/) compatibility.
 
 The manifest includes a special `config` field, referencing the image configuration as a JSON object detailing the

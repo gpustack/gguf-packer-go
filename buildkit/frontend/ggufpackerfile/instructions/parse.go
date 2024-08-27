@@ -428,7 +428,9 @@ func parseConvert(req parseRequest) (*ConvertCommand, error) {
 	}
 
 	flFrom := req.flags.AddString("from", "")
+	flClass := req.flags.AddString("class", "model")
 	flType := req.flags.AddString("type", "FP16")
+	flBaseModel := req.flags.AddString("base", "")
 
 	if err := req.flags.Parse(); err != nil {
 		return nil, err
@@ -450,7 +452,9 @@ func parseConvert(req parseRequest) (*ConvertCommand, error) {
 		withNameAndCode: newWithNameAndCode(req),
 		SourcesAndDest:  *sourcesAndDest,
 		From:            flFrom.Value,
+		Class:           flClass.Value,
 		Type:            flType.Value,
+		BaseModel:       flBaseModel.Value,
 	}, nil
 }
 

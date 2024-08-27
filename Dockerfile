@@ -20,7 +20,7 @@ rm -rf /var/lib/apt/lists/*
 EOF
 
 # get llama-tools
-COPY --from=ghcr.io/ggerganov/llama.cpp:full-b40eb84895bf723c7b327a1e3bf6e0e2c41877f8 --parents \
+COPY --from=ghcr.io/ggerganov/llama.cpp:full-879275ac984235373dd44ed780d5e3a3883cb558 --parents \
     /usr/local/lib/python3.10/dist-packages \
     /app/gguf-py \
     /app/convert_hf_to_gguf.py \
@@ -29,7 +29,7 @@ COPY --from=ghcr.io/ggerganov/llama.cpp:full-b40eb84895bf723c7b327a1e3bf6e0e2c41
     /
 
 # get gguf-parser
-COPY --from=docker.io/gpustack/gguf-parser:v0.7.2 --chmod=755 \
+COPY --from=docker.io/gpustack/gguf-parser:v0.8.1 --chmod=755 \
     /bin/gguf-parser \
     /bin/
 

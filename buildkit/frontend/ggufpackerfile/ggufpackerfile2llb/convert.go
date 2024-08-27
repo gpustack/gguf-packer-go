@@ -1456,6 +1456,11 @@ func dispatchCopy(d *dispatchState, cfg copyConfig) error {
 }
 
 func dispatchConvert(d *dispatchState, c *instructions.ConvertCommand, opt *dispatchOpt, sources []llb.State) (err error) {
+	classes := []string{
+		"model",
+		"lora",
+		"adapter",
+	}
 	// Extract from https://github.com/ggerganov/llama.cpp/blob/01245f5b1629075543bc4478418c7d72a0b4b3c7/convert_hf_to_gguf.py#L3553-L3556.
 	types := []string{
 		"F32",
@@ -1466,9 +1471,19 @@ func dispatchConvert(d *dispatchState, c *instructions.ConvertCommand, opt *disp
 
 	commitMessage := bytes.NewBufferString("CONVERT")
 
+	commitMessage.WriteString(" --class=" + c.Class)
+	if !slices.Contains(classes, c.Class) {
+		return errors.Errorf("invalid class %q", c.Class)
+	}
 	commitMessage.WriteString(" --type=" + c.Type)
 	if !slices.Contains(types, c.Type) {
 		return errors.Errorf("invalid type %q", c.Type)
+	}
+	if c.Class == "lora" {
+		commitMessage.WriteString(" --base=" + c.BaseModel)
+		if c.BaseModel == "" {
+			return errors.New("base model must be specified for class lora")
+		}
 	}
 
 	platform := opt.targetPlatform
@@ -1505,6 +1520,11 @@ func dispatchConvert(d *dispatchState, c *instructions.ConvertCommand, opt *disp
 		strings.ToLower(c.Type),
 		"--outfile",
 		path.Join("/run/dest", dest),
+	}
+	switch c.Class {
+	case "lora":
+		runArgs[0] = "/app/convert_lora_to_gguf.py"
+		runArgs = append(runArgs, "--base", c.BaseModel)
 	}
 	st := d.state
 	if len(sources) > 1 {

@@ -1,0 +1,11 @@
+FROM       scratch AS lora
+ADD        https://huggingface.co/inflaton/Qwen2-1.5B-MAC-lora.git Qwen2-1.5B-MAC-lora
+ADD        https://huggingface.co/Qwen/Qwen2-1.5B.git Qwen2-1.5B
+CONVERT    --class=lora --type=F16 --base=Qwen2-1.5B Qwen2-1.5B-MAC-lora Qwen2-1.5B-MAC-lora.F16.gguf
+
+FROM       scratch
+LABEL      gguf.model.from="Hugging Face"
+ADD        https://huggingface.co/QuantFactory/Qwen2-1.5B-GGUF/resolve/main/Qwen2-1.5B.Q5_K_M.gguf Qwen2-1.5B.Q5_K_M.gguf
+COPY       --from=lora Qwen2-1.5B-MAC-lora.F16.gguf Qwen2-1.5B-MAC-lora.F16.gguf
+
+CMD        ["-m", "Qwen2-1.5B.Q5_K_M.gguf", "--lora", "Qwen2-1.5B-MAC-lora.F16.gguf", "-c", "8192"]

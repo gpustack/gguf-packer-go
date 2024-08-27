@@ -283,8 +283,10 @@ func (c *CopyCommand) Expand(expander SingleWordExpander) error {
 type ConvertCommand struct {
 	withNameAndCode
 	SourcesAndDest
-	From string
-	Type string
+	From      string
+	Class     string
+	Type      string
+	BaseModel string
 }
 
 func (c *ConvertCommand) GetFrom() string {
@@ -292,11 +294,20 @@ func (c *ConvertCommand) GetFrom() string {
 }
 
 func (c *ConvertCommand) Expand(expander SingleWordExpander) error {
-	type_, err := expander(c.Type)
-	if err != nil {
-		return err
+	{
+		type_, err := expander(c.Type)
+		if err != nil {
+			return err
+		}
+		c.Type = type_
 	}
-	c.Type = type_
+	{
+		baseModel, err := expander(c.BaseModel)
+		if err != nil {
+			return err
+		}
+		c.BaseModel = baseModel
+	}
 	return c.SourcesAndDest.Expand(expander)
 }
 
