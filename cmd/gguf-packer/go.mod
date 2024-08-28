@@ -14,7 +14,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/google/go-containerregistry v0.20.2
 	github.com/gpustack/gguf-packer-go v0.0.0-00010101000000-000000000000
-	github.com/gpustack/gguf-parser-go v0.8.2
+	github.com/gpustack/gguf-parser-go v0.9.0
 	github.com/jedib0t/go-pretty/v6 v6.5.9
 	github.com/moby/buildkit v0.15.2
 	github.com/opencontainers/go-digest v1.0.0

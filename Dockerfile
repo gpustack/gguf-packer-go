@@ -29,7 +29,7 @@ COPY --from=ghcr.io/ggerganov/llama.cpp:full-879275ac984235373dd44ed780d5e3a3883
     /
 
 # get gguf-parser
-COPY --from=docker.io/gpustack/gguf-parser:v0.8.2 --chmod=755 \
+COPY --from=docker.io/gpustack/gguf-parser:v0.9.0 --chmod=755 \
     /bin/gguf-parser \
     /bin/
 

@@ -80,7 +80,7 @@ func estimate(app string) *cobra.Command {
 
 			// Retrieve args.
 			var (
-				mopts []ggufparser.LLaMACppUsageEstimateOption
+				mopts []ggufparser.LLaMACppRunEstimateOption
 
 				rawNoMMap             *bool
 				rawOffloadLayers      *int
@@ -257,19 +257,19 @@ func estimate(app string) *cobra.Command {
 				if offloadLayersDraft >= 0 {
 					dopts = append(dopts, ggufparser.WithOffloadLayers(uint64(offloadLayersDraft)))
 				}
-				de := d.EstimateLLaMACppUsage(dopts...)
+				de := d.EstimateLLaMACppRun(dopts...)
 				mopts = append(mopts, ggufparser.WithDrafter(&de))
 			}
 			if p := cf.Config.Projector; p != nil {
 				popts := mopts[:len(mopts):len(mopts)]
-				pe := p.EstimateLLaMACppUsage(popts...)
+				pe := p.EstimateLLaMACppRun(popts...)
 				mopts = append(mopts, ggufparser.WithProjector(&pe))
 			}
 			if len(cf.Config.Adapters) > 0 {
-				adps := make([]ggufparser.LLaMACppUsageEstimate, len(cf.Config.Adapters))
+				adps := make([]ggufparser.LLaMACppRunEstimate, len(cf.Config.Adapters))
 				aopts := mopts[:len(mopts):len(mopts)]
 				for i, adpgf := range cf.Config.Adapters {
-					ae := adpgf.EstimateLLaMACppUsage(aopts...)
+					ae := adpgf.EstimateLLaMACppRun(aopts...)
 					adps[i] = ae
 				}
 				mopts = append(mopts, ggufparser.WithAdapters(adps))
@@ -277,7 +277,7 @@ func estimate(app string) *cobra.Command {
 			if offloadLayers >= 0 {
 				mopts = append(mopts, ggufparser.WithOffloadLayers(uint64(offloadLayers)))
 			}
-			e := cf.Config.Model.EstimateLLaMACppUsage(mopts...)
+			e := cf.Config.Model.EstimateLLaMACppRun(mopts...)
 
 			var (
 				mmap                      = !noMMap
@@ -316,7 +316,7 @@ func estimate(app string) *cobra.Command {
 						defer wg.Done()
 						mopts := mopts[:len(mopts):len(mopts)]
 						mopts = append(mopts, ggufparser.WithOffloadLayers(uint64(i)*offloadLayersStep))
-						ess[i] = cf.Config.Model.EstimateLLaMACppUsage(mopts...).SummarizeMemory(mmap, platformRAM, platformVRAM)
+						ess[i] = cf.Config.Model.EstimateLLaMACppRun(mopts...).SummarizeMemory(mmap, platformRAM, platformVRAM)
 					}(i)
 				}
 				wg.Wait()
@@ -348,6 +348,7 @@ func estimate(app string) *cobra.Command {
 						"Full Offloaded",
 						"RAM",
 						"RAM",
+						"RAM",
 					},
 					{
 						"Arch",
@@ -359,13 +360,14 @@ func estimate(app string) *cobra.Command {
 						"Distributable",
 						"Offload Layers",
 						"Full Offloaded",
+						"Layers",
 						"UMA",
 						"NonUMA",
 					},
 				}
 				for i := range es.Memory[0].VRAMs {
-					hds[0] = append(hds[0], fmt.Sprintf("VRAM %d", i), fmt.Sprintf("VRAM %d", i))
-					hds[1] = append(hds[1], "UMA", "NonUMA")
+					hds[0] = append(hds[0], fmt.Sprintf("VRAM %d", i), fmt.Sprintf("VRAM %d", i), fmt.Sprintf("VRAM %d", i))
+					hds[1] = append(hds[1], "Layers", "UMA", "NonUMA")
 				}
 
 				bds = make([][]any, len(es.Memory))
@@ -381,11 +383,13 @@ func estimate(app string) *cobra.Command {
 						sprintf(tenary(es.Memory[i].FullOffloaded, sprintf("%d (%d + 1)",
 							es.Memory[i].OffloadLayers, es.Memory[i].OffloadLayers-1), es.Memory[i].OffloadLayers)),
 						sprintf(tenary(es.Memory[i].FullOffloaded, "Yes", "No")),
+						sprintf(tenary(!es.Memory[i].RAM.HandleOutputLayer, es.Memory[i].RAM.HandleLayers, sprintf("%d + 1", es.Memory[i].RAM.HandleLayers))),
 						sprintf(es.Memory[i].RAM.UMA),
 						sprintf(es.Memory[i].RAM.NonUMA),
 					}
 					for _, v := range es.Memory[i].VRAMs {
 						bds[i] = append(bds[i],
+							sprintf(tenary(!v.HandleOutputLayer, v.HandleLayers, sprintf("%d + 1", v.HandleLayers))),
 							sprintf(v.UMA),
 							sprintf(v.NonUMA))
 					}
