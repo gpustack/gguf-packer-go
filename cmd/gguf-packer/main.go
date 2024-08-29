@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gpustack/gguf-packer-go/util/anyx"
 	"github.com/gpustack/gguf-packer-go/util/osx"
@@ -129,7 +130,7 @@ func tfprint(w io.Writer, border bool, headers, bodies [][]any) {
 		for i := range r {
 			r[i].Number = i + 1
 			r[i].AutoMerge = border
-			if len(headers) > 1 && (headers[1][i] == "layers" || headers[1][i] == "UMA" || headers[1][i] == "NonUMA") {
+			if len(headers) > 1 && (strings.HasPrefix(headers[1][i].(string), "Layers") || headers[1][i] == "UMA" || headers[1][i] == "NonUMA") {
 				r[i].AutoMerge = false
 			}
 			r[i].Align = text.AlignCenter

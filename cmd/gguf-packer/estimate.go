@@ -36,7 +36,8 @@ func estimate(app string) *cobra.Command {
 		offloadLayers      = -1
 		offloadLayersDraft = -1
 		offloadLayersStep  uint64
-		json               bool
+		inShort            bool
+		inJson             bool
 	)
 
 	c := &cobra.Command{
@@ -325,7 +326,7 @@ func estimate(app string) *cobra.Command {
 			}
 
 			w := c.OutOrStdout()
-			if json {
+			if inJson {
 				jprint(w, es)
 				return nil
 			}
@@ -335,8 +336,9 @@ func estimate(app string) *cobra.Command {
 				bds [][]any
 			)
 			{
-				hds = [][]any{
-					{
+				hds = make([][]any, 2)
+				if !inShort {
+					hds[0] = []any{
 						"Arch",
 						"Context Size",
 						"Batch Size (L / P)",
@@ -346,11 +348,8 @@ func estimate(app string) *cobra.Command {
 						"Distributable",
 						"Offload Layers",
 						"Full Offloaded",
-						"RAM",
-						"RAM",
-						"RAM",
-					},
-					{
+					}
+					hds[1] = []any{
 						"Arch",
 						"Context Size",
 						"Batch Size (L / P)",
@@ -360,36 +359,38 @@ func estimate(app string) *cobra.Command {
 						"Distributable",
 						"Offload Layers",
 						"Full Offloaded",
-						"Layers",
-						"UMA",
-						"NonUMA",
-					},
+					}
 				}
+				hds[0] = append(hds[0], "RAM", "RAM", "RAM")
+				hds[1] = append(hds[1], "Layers (I + T + O)", "UMA", "NonUMA")
 				for i := range es.Memory[0].VRAMs {
 					hds[0] = append(hds[0], fmt.Sprintf("VRAM %d", i), fmt.Sprintf("VRAM %d", i), fmt.Sprintf("VRAM %d", i))
-					hds[1] = append(hds[1], "Layers", "UMA", "NonUMA")
+					hds[1] = append(hds[1], "Layers (T + O)", "UMA", "NonUMA")
 				}
 
 				bds = make([][]any, len(es.Memory))
 				for i := range es.Memory {
-					bds[i] = []any{
-						sprintf(es.Architecture),
-						sprintf(es.ContextSize),
-						sprintf("%d / %d", es.LogicalBatchSize, es.PhysicalBatchSize),
-						sprintf(tenary(flashAttention, tenary(es.FlashAttention, "Enabled", "Not Supported"), "Disabled")),
-						sprintf(tenary(mmap, tenary(!es.NoMMap, "Enabled", "Not Supported"), "Disabled")),
-						sprintf(tenary(es.EmbeddingOnly, "Yes", "No")),
-						sprintf(tenary(es.Distributable, "Supported", "Not Supported")),
-						sprintf(tenary(es.Memory[i].FullOffloaded, sprintf("%d (%d + 1)",
-							es.Memory[i].OffloadLayers, es.Memory[i].OffloadLayers-1), es.Memory[i].OffloadLayers)),
-						sprintf(tenary(es.Memory[i].FullOffloaded, "Yes", "No")),
-						sprintf(tenary(!es.Memory[i].RAM.HandleOutputLayer, es.Memory[i].RAM.HandleLayers, sprintf("%d + 1", es.Memory[i].RAM.HandleLayers))),
-						sprintf(es.Memory[i].RAM.UMA),
-						sprintf(es.Memory[i].RAM.NonUMA),
+					if !inShort {
+						bds[i] = []any{
+							sprintf(es.Architecture),
+							sprintf(es.ContextSize),
+							sprintf("%d / %d", es.LogicalBatchSize, es.PhysicalBatchSize),
+							sprintf(tenary(flashAttention, tenary(es.FlashAttention, "Enabled", "Unsupported"), "Disabled")),
+							sprintf(tenary(mmap, tenary(!es.NoMMap, "Enabled", "Unsupported"), "Disabled")),
+							sprintf(tenary(es.EmbeddingOnly, "Yes", "No")),
+							sprintf(tenary(es.Distributable, "Supported", "Unsupported")),
+							sprintf(tenary(es.Memory[i].FullOffloaded, sprintf("%d (%d + 1)",
+								es.Memory[i].OffloadLayers, es.Memory[i].OffloadLayers-1), es.Memory[i].OffloadLayers)),
+							sprintf(tenary(es.Memory[i].FullOffloaded, "Yes", "No")),
+						}
 					}
+					bds[i] = append(bds[i],
+						sprintf("1 + %d + %d", es.Memory[i].RAM.HandleLayers, tenary(es.Memory[i].RAM.HandleOutputLayer, 1, 0)),
+						sprintf(es.Memory[i].RAM.UMA),
+						sprintf(es.Memory[i].RAM.NonUMA))
 					for _, v := range es.Memory[i].VRAMs {
 						bds[i] = append(bds[i],
-							sprintf(tenary(!v.HandleOutputLayer, v.HandleLayers, sprintf("%d + 1", v.HandleLayers))),
+							sprintf("%d + %d", v.HandleLayers, tenary(v.HandleOutputLayer, 1, 0)),
 							sprintf(v.UMA),
 							sprintf(v.NonUMA))
 					}
@@ -419,7 +420,8 @@ func estimate(app string) *cobra.Command {
 	c.Flags().IntVar(&offloadLayers, "gpu-layers", offloadLayers, "Specify the offload layers.")
 	c.Flags().IntVar(&offloadLayersDraft, "gpu-layers-draft", offloadLayersDraft, "Specify the offload layers draft.")
 	c.Flags().Uint64Var(&offloadLayersStep, "gpu-layers-step", offloadLayersStep, "Specify the offload layers step.")
-	c.Flags().BoolVar(&json, "json", json, "Output as JSON.")
+	c.Flags().BoolVar(&inShort, "in-short", inShort, "Output as short format.")
+	c.Flags().BoolVar(&inJson, "json", inJson, "Output as JSON.")
 	return c
 }
 
