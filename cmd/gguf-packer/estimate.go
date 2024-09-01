@@ -36,6 +36,7 @@ func estimate(app string) *cobra.Command {
 		offloadLayers      = -1
 		offloadLayersDraft = -1
 		offloadLayersStep  uint64
+		deviceMetrics      []string
 		inShort            bool
 		inJson             bool
 	)
@@ -81,7 +82,7 @@ func estimate(app string) *cobra.Command {
 
 			// Retrieve args.
 			var (
-				mopts []ggufparser.LLaMACppRunEstimateOption
+				eopts []ggufparser.LLaMACppRunEstimateOption
 
 				rawNoMMap             *bool
 				rawOffloadLayers      *int
@@ -98,7 +99,7 @@ func estimate(app string) *cobra.Command {
 					if err != nil {
 						continue
 					}
-					mopts = append(mopts, ggufparser.WithContextSize(int32(v)))
+					eopts = append(eopts, ggufparser.WithContextSize(int32(v)))
 				case "-b", "--batch-size":
 					if i+1 >= s {
 						continue
@@ -108,7 +109,7 @@ func estimate(app string) *cobra.Command {
 					if err != nil {
 						continue
 					}
-					mopts = append(mopts, ggufparser.WithLogicalBatchSize(int32(v)))
+					eopts = append(eopts, ggufparser.WithLogicalBatchSize(int32(v)))
 				case "-ub", "--ubatch-size":
 					if i+1 >= s {
 						continue
@@ -118,7 +119,7 @@ func estimate(app string) *cobra.Command {
 					if err != nil {
 						continue
 					}
-					mopts = append(mopts, ggufparser.WithPhysicalBatchSize(int32(v)))
+					eopts = append(eopts, ggufparser.WithPhysicalBatchSize(int32(v)))
 				case "-np", "--parallel":
 					if i+1 >= s {
 						continue
@@ -128,23 +129,23 @@ func estimate(app string) *cobra.Command {
 					if err != nil {
 						continue
 					}
-					mopts = append(mopts, ggufparser.WithParallelSize(int32(v)))
+					eopts = append(eopts, ggufparser.WithParallelSize(int32(v)))
 				case "-nkvo", "--no-kv-offload":
-					mopts = append(mopts, ggufparser.WithoutOffloadKVCache())
+					eopts = append(eopts, ggufparser.WithoutOffloadKVCache())
 				case "-ctk", "--cache-type-k":
 					if i+1 >= s {
 						continue
 					}
 					i++
-					mopts = append(mopts, ggufparser.WithCacheKeyType(toGGMLType(cmd[i])))
+					eopts = append(eopts, ggufparser.WithCacheKeyType(toGGMLType(cmd[i])))
 				case "-ctv", "--cache-type-v":
 					if i+1 >= s {
 						continue
 					}
 					i++
-					mopts = append(mopts, ggufparser.WithCacheValueType(toGGMLType(cmd[i])))
+					eopts = append(eopts, ggufparser.WithCacheValueType(toGGMLType(cmd[i])))
 				case "-fa", "--flash-attn":
-					mopts = append(mopts, ggufparser.WithFlashAttention())
+					eopts = append(eopts, ggufparser.WithFlashAttention())
 				case "-ngl", "--gpu-layers":
 					if i+1 >= s {
 						continue
@@ -170,39 +171,39 @@ func estimate(app string) *cobra.Command {
 
 			// Override.
 			if ctxSize > 0 {
-				mopts = append(mopts, ggufparser.WithContextSize(int32(ctxSize)))
+				eopts = append(eopts, ggufparser.WithContextSize(int32(ctxSize)))
 			}
 			if logicalBatchSize > 0 {
-				mopts = append(mopts, ggufparser.WithLogicalBatchSize(int32(logicalBatchSize)))
+				eopts = append(eopts, ggufparser.WithLogicalBatchSize(int32(logicalBatchSize)))
 			}
 			if physicalBatchSize > 0 {
 				if physicalBatchSize > logicalBatchSize {
 					return errors.New("--ubatch-size must be less than or equal to --batch-size")
 				}
-				mopts = append(mopts, ggufparser.WithPhysicalBatchSize(int32(physicalBatchSize)))
+				eopts = append(eopts, ggufparser.WithPhysicalBatchSize(int32(physicalBatchSize)))
 			}
 			if parallelSize > 0 {
-				mopts = append(mopts, ggufparser.WithParallelSize(int32(parallelSize)))
+				eopts = append(eopts, ggufparser.WithParallelSize(int32(parallelSize)))
 			}
 			if cacheKeyType != "" {
-				mopts = append(mopts, ggufparser.WithCacheKeyType(toGGMLType(cacheKeyType)))
+				eopts = append(eopts, ggufparser.WithCacheKeyType(toGGMLType(cacheKeyType)))
 			}
 			if cacheValueType != "" {
-				mopts = append(mopts, ggufparser.WithCacheValueType(toGGMLType(cacheValueType)))
+				eopts = append(eopts, ggufparser.WithCacheValueType(toGGMLType(cacheValueType)))
 			}
 			if noKVOffload {
-				mopts = append(mopts, ggufparser.WithoutOffloadKVCache())
+				eopts = append(eopts, ggufparser.WithoutOffloadKVCache())
 			}
 			if flashAttention {
-				mopts = append(mopts, ggufparser.WithFlashAttention())
+				eopts = append(eopts, ggufparser.WithFlashAttention())
 			}
 			switch splitMode {
 			case "row":
-				mopts = append(mopts, ggufparser.WithSplitMode(ggufparser.LLaMACppSplitModeRow))
+				eopts = append(eopts, ggufparser.WithSplitMode(ggufparser.LLaMACppSplitModeRow))
 			case "none":
-				mopts = append(mopts, ggufparser.WithSplitMode(ggufparser.LLaMACppSplitModeNone))
+				eopts = append(eopts, ggufparser.WithSplitMode(ggufparser.LLaMACppSplitModeNone))
 			default:
-				mopts = append(mopts, ggufparser.WithSplitMode(ggufparser.LLaMACppSplitModeLayer))
+				eopts = append(eopts, ggufparser.WithSplitMode(ggufparser.LLaMACppSplitModeLayer))
 			}
 			if tensorSplit != "" {
 				tss := strings.Split(tensorSplit, ",")
@@ -220,9 +221,9 @@ func estimate(app string) *cobra.Command {
 				for i, v := range vv {
 					vf[i] = v / vs
 				}
-				mopts = append(mopts, ggufparser.WithTensorSplitFraction(vf))
+				eopts = append(eopts, ggufparser.WithTensorSplitFraction(vf))
 				if mainGPU < uint(len(vv)) {
-					mopts = append(mopts, ggufparser.WithMainGPUIndex(int(mainGPU)))
+					eopts = append(eopts, ggufparser.WithMainGPUIndex(int(mainGPU)))
 				} else {
 					return errors.New("--main-gpu must be less than item size of --tensor-split")
 				}
@@ -239,8 +240,34 @@ func estimate(app string) *cobra.Command {
 						}
 						rpc[i] = s
 					}
-					mopts = append(mopts, ggufparser.WithRPCServers(rpc))
+					eopts = append(eopts, ggufparser.WithRPCServers(rpc))
 				}
+			}
+			if dmss := deviceMetrics; len(dmss) > 0 {
+				dms := make([]ggufparser.LLaMACppRunDeviceMetric, len(dmss))
+				for i := range dmss {
+					ss := strings.Split(dmss[i], ";")
+					if len(ss) < 2 {
+						return errors.New("--device-metric has invalid format")
+					}
+					dms[i].FLOPS, err = ggufparser.ParseFLOPSScalar(strings.TrimSpace(ss[0]))
+					if err != nil {
+						return fmt.Errorf("--device-metric has invalid FLOPS: %w", err)
+					}
+					dms[i].UpBandwidth, err = ggufparser.ParseBytesPerSecondScalar(strings.TrimSpace(ss[1]))
+					if err != nil {
+						return fmt.Errorf("--device-metric has invalid Up Bandwidth: %w", err)
+					}
+					if len(ss) > 2 {
+						dms[i].DownBandwidth, err = ggufparser.ParseBytesPerSecondScalar(strings.TrimSpace(ss[2]))
+						if err != nil {
+							return fmt.Errorf("--device-metric has invalid Down Bandwidth: %w", err)
+						}
+					} else {
+						dms[i].DownBandwidth = dms[i].UpBandwidth
+					}
+				}
+				eopts = append(eopts, ggufparser.WithDeviceMetrics(dms))
 			}
 			if rawNoMMap != nil && !c.Flags().Changed("no-mmap") {
 				noMMap = *rawNoMMap
@@ -254,31 +281,31 @@ func estimate(app string) *cobra.Command {
 
 			// Estimate.
 			if d := cf.Config.Drafter; d != nil {
-				dopts := mopts[:len(mopts):len(mopts)]
+				dopts := eopts[:len(eopts):len(eopts)]
 				if offloadLayersDraft >= 0 {
 					dopts = append(dopts, ggufparser.WithOffloadLayers(uint64(offloadLayersDraft)))
 				}
 				de := d.EstimateLLaMACppRun(dopts...)
-				mopts = append(mopts, ggufparser.WithDrafter(&de))
+				eopts = append(eopts, ggufparser.WithDrafter(&de))
 			}
 			if p := cf.Config.Projector; p != nil {
-				popts := mopts[:len(mopts):len(mopts)]
+				popts := eopts[:len(eopts):len(eopts)]
 				pe := p.EstimateLLaMACppRun(popts...)
-				mopts = append(mopts, ggufparser.WithProjector(&pe))
+				eopts = append(eopts, ggufparser.WithProjector(&pe))
 			}
 			if len(cf.Config.Adapters) > 0 {
 				adps := make([]ggufparser.LLaMACppRunEstimate, len(cf.Config.Adapters))
-				aopts := mopts[:len(mopts):len(mopts)]
+				aopts := eopts[:len(eopts):len(eopts)]
 				for i, adpgf := range cf.Config.Adapters {
 					ae := adpgf.EstimateLLaMACppRun(aopts...)
 					adps[i] = ae
 				}
-				mopts = append(mopts, ggufparser.WithAdapters(adps))
+				eopts = append(eopts, ggufparser.WithAdapters(adps))
 			}
 			if offloadLayers >= 0 {
-				mopts = append(mopts, ggufparser.WithOffloadLayers(uint64(offloadLayers)))
+				eopts = append(eopts, ggufparser.WithOffloadLayers(uint64(offloadLayers)))
 			}
-			e := cf.Config.Model.EstimateLLaMACppRun(mopts...)
+			e := cf.Config.Model.EstimateLLaMACppRun(eopts...)
 
 			var (
 				mmap                      = !noMMap
@@ -309,20 +336,20 @@ func estimate(app string) *cobra.Command {
 				if e.OffloadLayers%offloadLayersStep != 0 || e.FullOffloaded {
 					cnt++
 				}
-				ess := make([]ggufparser.LLaMACppUsageEstimateMemorySummary, cnt)
+				esis := make([]ggufparser.LLaMACppRunEstimateSummaryItem, cnt)
 				var wg sync.WaitGroup
-				for i := 0; i < cap(ess); i++ {
+				for i := 0; i < cap(esis); i++ {
 					wg.Add(1)
 					go func(i int) {
 						defer wg.Done()
-						mopts := mopts[:len(mopts):len(mopts)]
-						mopts = append(mopts, ggufparser.WithOffloadLayers(uint64(i)*offloadLayersStep))
-						ess[i] = cf.Config.Model.EstimateLLaMACppRun(mopts...).SummarizeMemory(mmap, platformRAM, platformVRAM)
+						eopts := eopts[:len(eopts):len(eopts)]
+						eopts = append(eopts, ggufparser.WithOffloadLayers(uint64(i)*offloadLayersStep))
+						esis[i] = cf.Config.Model.EstimateLLaMACppRun(eopts...).SummarizeItem(mmap, platformRAM, platformVRAM)
 					}(i)
 				}
 				wg.Wait()
-				ess[cap(ess)-1] = es.Memory[0]
-				es.Memory = ess
+				esis[cap(esis)-1] = es.Items[0]
+				es.Items = esis
 			}
 
 			w := c.OutOrStdout()
@@ -361,15 +388,19 @@ func estimate(app string) *cobra.Command {
 						"Full Offloaded",
 					}
 				}
+				if es.Items[0].MaximumTokensPerSecond != nil {
+					hds[0] = append(hds[0], "Max TPS")
+					hds[1] = append(hds[1], "Max TPS")
+				}
 				hds[0] = append(hds[0], "RAM", "RAM", "RAM")
 				hds[1] = append(hds[1], "Layers (I + T + O)", "UMA", "NonUMA")
-				for i := range es.Memory[0].VRAMs {
+				for i := range es.Items[0].VRAMs {
 					hds[0] = append(hds[0], fmt.Sprintf("VRAM %d", i), fmt.Sprintf("VRAM %d", i), fmt.Sprintf("VRAM %d", i))
 					hds[1] = append(hds[1], "Layers (T + O)", "UMA", "NonUMA")
 				}
 
-				bds = make([][]any, len(es.Memory))
-				for i := range es.Memory {
+				bds = make([][]any, len(es.Items))
+				for i := range es.Items {
 					if !inShort {
 						bds[i] = []any{
 							sprintf(es.Architecture),
@@ -379,16 +410,20 @@ func estimate(app string) *cobra.Command {
 							sprintf(tenary(mmap, tenary(!es.NoMMap, "Enabled", "Unsupported"), "Disabled")),
 							sprintf(tenary(es.EmbeddingOnly, "Yes", "No")),
 							sprintf(tenary(es.Distributable, "Supported", "Unsupported")),
-							sprintf(tenary(es.Memory[i].FullOffloaded, sprintf("%d (%d + 1)",
-								es.Memory[i].OffloadLayers, es.Memory[i].OffloadLayers-1), es.Memory[i].OffloadLayers)),
-							sprintf(tenary(es.Memory[i].FullOffloaded, "Yes", "No")),
+							sprintf(tenary(es.Items[i].FullOffloaded, sprintf("%d (%d + 1)",
+								es.Items[i].OffloadLayers, es.Items[i].OffloadLayers-1), es.Items[i].OffloadLayers)),
+							sprintf(tenary(es.Items[i].FullOffloaded, "Yes", "No")),
 						}
 					}
+					if es.Items[i].MaximumTokensPerSecond != nil {
+						bds[i] = append(bds[i],
+							sprintf(*es.Items[i].MaximumTokensPerSecond))
+					}
 					bds[i] = append(bds[i],
-						sprintf("1 + %d + %d", es.Memory[i].RAM.HandleLayers, tenary(es.Memory[i].RAM.HandleOutputLayer, 1, 0)),
-						sprintf(es.Memory[i].RAM.UMA),
-						sprintf(es.Memory[i].RAM.NonUMA))
-					for _, v := range es.Memory[i].VRAMs {
+						sprintf("1 + %d + %d", es.Items[i].RAM.HandleLayers, tenary(es.Items[i].RAM.HandleOutputLayer, 1, 0)),
+						sprintf(es.Items[i].RAM.UMA),
+						sprintf(es.Items[i].RAM.NonUMA))
+					for _, v := range es.Items[i].VRAMs {
 						bds[i] = append(bds[i],
 							sprintf("%d + %d", v.HandleLayers, tenary(v.HandleOutputLayer, 1, 0)),
 							sprintf(v.UMA),
@@ -420,6 +455,9 @@ func estimate(app string) *cobra.Command {
 	c.Flags().IntVar(&offloadLayers, "gpu-layers", offloadLayers, "Specify the offload layers.")
 	c.Flags().IntVar(&offloadLayersDraft, "gpu-layers-draft", offloadLayersDraft, "Specify the offload layers draft.")
 	c.Flags().Uint64Var(&offloadLayersStep, "gpu-layers-step", offloadLayersStep, "Specify the offload layers step.")
+	c.Flags().StringSliceVar(&deviceMetrics, "device-metric", deviceMetrics, "Specify the device metric, in form of \"FLOPS;Up Bandwidth[;Down Bandwidth]\". "+
+		"The FLOPS unit, select from [PFLOPS, TFLOPS, GFLOPS, MFLOPS, KFLOPS]. "+
+		"The Up/Down Bandwidth unit, select from [PiBps, PBps, TiBps, TBps, GiBps, GBps, MiBps, MBps, KiBps, KBps].")
 	c.Flags().BoolVar(&inShort, "in-short", inShort, "Output as short format.")
 	c.Flags().BoolVar(&inJson, "json", inJson, "Output as JSON.")
 	return c
