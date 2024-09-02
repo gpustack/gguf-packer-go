@@ -457,7 +457,7 @@ func estimate(app string) *cobra.Command {
 	c.Flags().Uint64Var(&offloadLayersStep, "gpu-layers-step", offloadLayersStep, "Specify the offload layers step.")
 	c.Flags().StringSliceVar(&deviceMetrics, "device-metric", deviceMetrics, "Specify the device metric, in form of \"FLOPS;Up Bandwidth[;Down Bandwidth]\". "+
 		"The FLOPS unit, select from [PFLOPS, TFLOPS, GFLOPS, MFLOPS, KFLOPS]. "+
-		"The Up/Down Bandwidth unit, select from [PiBps, PBps, TiBps, TBps, GiBps, GBps, MiBps, MBps, KiBps, KBps].")
+		"The Up/Down Bandwidth unit, select from [PiBps, TiBps, GiBps, MiBps, KiBps, PBps, TBps, GBps, MBps, KBps, Pbps, Tbps, Gbps, Mbps, Kbps].")
 	c.Flags().BoolVar(&inShort, "in-short", inShort, "Output as short format.")
 	c.Flags().BoolVar(&inJson, "json", inJson, "Output as JSON.")
 	return c
