@@ -14,7 +14,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/google/go-containerregistry v0.20.2
 	github.com/gpustack/gguf-packer-go v0.0.0-00010101000000-000000000000
-	github.com/gpustack/gguf-parser-go v0.11.0
+	github.com/gpustack/gguf-parser-go v0.11.1
 	github.com/jedib0t/go-pretty/v6 v6.5.9
 	github.com/moby/buildkit v0.15.2
 	github.com/opencontainers/go-digest v1.0.0
@@ -132,7 +132,7 @@ require (
 	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/oauth2 v0.22.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.24.0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
 	golang.org/x/term v0.23.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect

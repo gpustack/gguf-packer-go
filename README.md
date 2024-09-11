@@ -471,8 +471,8 @@ CONVERT    --type=F16 --class=lora --base=Qwen2-1.5B Qwen2-1.5B-MAC-lora Qwen2-1
 - `CONVERT [--class=<model|lora>] <src> <dest>`, specify the class for the model, default is `model`.
     + `CONVERT --class=lora --base=<path> <src> <dest>`, convert a PEFT LoRA adapter to GGUF file, must provide the
       `base` model.
-- `CONVERT [--type=<type>] <src> <dest>`, specify the output type for `<dest>`, select from `F32`, `F16`, `BF16` and
-  `Q8_0`, default is `F16`.
+- `CONVERT [--type=<type>] <src> <dest>`, specify the output type for `<dest>`, select from `F32`, `F16`, `BF16`,
+  `Q8_0`, `TQ1_0`, and `TQ2_0`, default is `F16`.
 
 #### FROM
 

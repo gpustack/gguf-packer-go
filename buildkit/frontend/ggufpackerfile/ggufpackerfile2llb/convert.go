@@ -1461,12 +1461,14 @@ func dispatchConvert(d *dispatchState, c *instructions.ConvertCommand, opt *disp
 		"lora",
 		"adapter",
 	}
-	// Extract from https://github.com/ggerganov/llama.cpp/blob/01245f5b1629075543bc4478418c7d72a0b4b3c7/convert_hf_to_gguf.py#L3553-L3556.
+	// Extract from https://github.com/ggerganov/llama.cpp/blob/b34e02348064c2f0cef1f89b44d9bee4eb15b9e7/convert_hf_to_gguf.py#L4032-L4035.
 	types := []string{
 		"F32",
 		"F16",
 		"BF16",
 		"Q8_0",
+		"TQ1_0",
+		"TQ2_0",
 	}
 
 	commitMessage := bytes.NewBufferString("CONVERT")
@@ -1571,7 +1573,7 @@ func dispatchLabel(d *dispatchState, c *instructions.LabelCommand, lint *linter.
 }
 
 func dispatchQuantize(d *dispatchState, c *instructions.QuantizeCommand, opt *dispatchOpt, sources []llb.State) (err error) {
-	// Extract from https://github.com/ggerganov/llama.cpp/blob/c887d8b01726b11ea03dbcaa9d44fa74422d0076/examples/quantize/quantize.cpp#L19-L51.
+	// Extract from https://github.com/ggerganov/llama.cpp/blob/b34e02348064c2f0cef1f89b44d9bee4eb15b9e7/examples/quantize/quantize.cpp#L19-L53.
 	types := []string{
 		"Q4_0",
 		"Q4_1",
@@ -1583,6 +1585,8 @@ func dispatchQuantize(d *dispatchState, c *instructions.QuantizeCommand, opt *di
 		"IQ2_M",
 		"IQ1_S",
 		"IQ1_M",
+		"TQ1_0",
+		"TQ2_0",
 		"Q2_K",
 		"Q2_K_S",
 		"IQ3_XXS",
@@ -1607,7 +1611,7 @@ func dispatchQuantize(d *dispatchState, c *instructions.QuantizeCommand, opt *di
 		"Q4_0_4_8",
 		"Q4_0_8_8",
 	}
-	// Extract from https://github.com/ggerganov/llama.cpp/blob/c887d8b01726b11ea03dbcaa9d44fa74422d0076/ggml/src/ggml.c#L579-L974.
+	// Extract from https://github.com/ggerganov/llama.cpp/blob/b34e02348064c2f0cef1f89b44d9bee4eb15b9e7/ggml/src/ggml.c#L663-L1082.
 	ggmlTypes := map[string]string{
 		"I8":       "i8",
 		"I16":      "i16",
@@ -1641,6 +1645,8 @@ func dispatchQuantize(d *dispatchState, c *instructions.QuantizeCommand, opt *di
 		"Q4_0_4_4": "q4_0_4x4",
 		"Q4_0_4_8": "q4_0_4x8",
 		"Q4_0_8_8": "q4_0_8x8",
+		"TQ1_0":    "tq1_0",
+		"TQ2_0":    "tq2_0",
 	}
 
 	commitMessage := bytes.NewBufferString("QUANTIZE")
