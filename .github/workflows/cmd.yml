@@ -22,6 +22,8 @@ on:
       - "examples/**"
       - "models/**"
       - ".github/workflows/models-*.yml"
+      - ".github/workflows/clean.yml"
+      - ".github/workflows/close.yml"
     tags:
       - "v*.*.*"
 
