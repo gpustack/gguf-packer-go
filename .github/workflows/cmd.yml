@@ -12,7 +12,7 @@ defaults:
 on:
   push:
     branches:
-      - main
+      - "main"
     paths-ignore:
       - "docs/**"
       - "**.md"
@@ -21,9 +21,7 @@ on:
       - "**.jpg"
       - "examples/**"
       - "models/**"
-      - ".github/workflows/models-*.yml"
-      - ".github/workflows/clean.yml"
-      - ".github/workflows/close.yml"
+      - "!.github/workflows/ci.yml"
     tags:
       - "v*.*.*"
 
