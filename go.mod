@@ -6,7 +6,7 @@ require (
 	github.com/containerd/platforms v0.2.1
 	github.com/distribution/reference v0.6.0
 	github.com/docker/go-units v0.5.0
-	github.com/gpustack/gguf-parser-go v0.11.1
+	github.com/gpustack/gguf-parser-go v0.12.0
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/moby/buildkit v0.15.2
 	github.com/moby/patternmatcher v0.6.0
