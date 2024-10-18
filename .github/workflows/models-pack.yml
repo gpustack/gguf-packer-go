@@ -84,7 +84,7 @@ jobs:
         include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     steps:
       - name: Maximize Docker Build Space
-        uses: gpustack/gguf-packer-go/.github/actions/maximize-docker-build-space@main
+        uses: gpustack/.github/actions/maximize-docker-build-space@main
         with:
           root-reserve-mb: 1024
           temp-reserve-mb: 1024
